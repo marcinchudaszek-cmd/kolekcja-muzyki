@@ -1,16 +1,41 @@
-# kolekcja_muzyki
+# Kolekcja Muzyki
 
-A new Flutter project.
+Aplikacja mobilna (Flutter) do zarządzania własną kolekcją muzyki — pełnoprawny
+odtwarzacz z dostępem do plików, katalogiem albumów i backupem w chmurze.
 
-## Getting Started
+- **Nazwa w sklepie:** Kolekcja Muzyki
+- **Pakiet:** `com.beagleappsstudio.kolekcjamuzyki`
+- **Wydawca:** Beagle Apps Studio
+- **Wersja:** 1.3.3 (build 19)
 
-This project is a starting point for a Flutter application.
+## Funkcje
 
-A few resources to get you started if this is your first Flutter project:
+- 🎵 Odtwarzacz audio z odtwarzaniem w tle i equalizerem
+- 💿 Katalog kolekcji — albumy, płyty CD, winyle
+- 📷 Skaner kodów kreskowych do dodawania płyt
+- 🖼️ Automatyczne pobieranie okładek (MusicBrainz)
+- 📂 Skanowanie plików muzycznych z urządzenia
+- ☁️ Backup i przywracanie z Google Drive
+- 📊 Statystyki i historia odsłuchań
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Stack
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter / Dart (SDK `>=3.0.0 <4.0.0`)
+- `just_audio` + `just_audio_background` — odtwarzanie
+- `hive` — lokalna baza danych
+- `google_sign_in` + `googleapis` — backup na Google Drive
+- `mobile_scanner` — skaner kodów
+- `provider` — zarządzanie stanem
+
+## Uruchomienie
+
+```bash
+flutter pub get
+flutter run
+```
+
+Build produkcyjny (Android):
+
+```bash
+flutter build appbundle --release
+```
