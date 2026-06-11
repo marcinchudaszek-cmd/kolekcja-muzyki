@@ -53,6 +53,29 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Kolekcja Muzyki',
         debugShowCheckedModeBanner: false,
+        // Na szerokich ekranach (web/desktop) ogranicz aplikację do
+        // wycentrowanej kolumny o proporcjach telefonu.
+        builder: (context, child) {
+          final width = MediaQuery.of(context).size.width;
+          if (width <= 600 || child == null) return child ?? const SizedBox();
+          return ColoredBox(
+            color: const Color(0xFF070710),
+            child: Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: MediaQuery(
+                    data: MediaQuery.of(context).copyWith(
+                      size: Size(480, MediaQuery.of(context).size.height),
+                    ),
+                    child: child,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
         theme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.dark,
