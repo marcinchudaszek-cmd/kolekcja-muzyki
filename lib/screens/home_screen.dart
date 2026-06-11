@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/album.dart';
@@ -319,18 +320,31 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Dodaj albumy lub zeskanuj muzykę z telefonu',
+            // Skanowanie pamięci urządzenia działa tylko w aplikacji mobilnej
+            kIsWeb
+                ? 'Dodaj albumy do swojej kolekcji'
+                : 'Dodaj albumy lub zeskanuj muzykę z telefonu',
             style: TextStyle(color: Colors.grey[400]),
           ),
           const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ScanMusicScreen()),
+          if (kIsWeb)
+            ElevatedButton.icon(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddAlbumScreen()),
+              ),
+              icon: const Icon(Icons.add),
+              label: const Text('Dodaj album'),
+            )
+          else
+            ElevatedButton.icon(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ScanMusicScreen()),
+              ),
+              icon: const Icon(Icons.folder_open),
+              label: const Text('Skanuj muzykę z telefonu'),
             ),
-            icon: const Icon(Icons.folder_open),
-            label: const Text('Skanuj muzykę z telefonu'),
-          ),
         ],
       ),
     );
@@ -469,18 +483,20 @@ class _HomeScreenState extends State<HomeScreen> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 24),
-            _buildAddOption(
-              icon: Icons.folder_open,
-              title: 'Skanuj muzykę z telefonu',
-              subtitle: 'Znajdź albumy w pamięci urządzenia',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ScanMusicScreen()),
-                );
-              },
-            ),
+            // Skanowanie pamięci urządzenia niedostępne w przeglądarce
+            if (!kIsWeb)
+              _buildAddOption(
+                icon: Icons.folder_open,
+                title: 'Skanuj muzykę z telefonu',
+                subtitle: 'Znajdź albumy w pamięci urządzenia',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ScanMusicScreen()),
+                  );
+                },
+              ),
             _buildAddOption(
               icon: Icons.qr_code_scanner,
               title: 'Skanuj kod kreskowy',

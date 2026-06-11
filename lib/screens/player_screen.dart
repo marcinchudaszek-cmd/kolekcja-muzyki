@@ -1,4 +1,5 @@
 ﻿import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -70,7 +71,9 @@ class PlayerScreen extends StatelessWidget {
                       ],
                     ),
                     const Spacer(),
-                    IconButton(
+                    // Equalizer dostępny tylko w aplikacji mobilnej
+                    if (!kIsWeb)
+                      IconButton(
                         icon: const Icon(Icons.equalizer),
                         onPressed: () async {
                           Navigator.push(
