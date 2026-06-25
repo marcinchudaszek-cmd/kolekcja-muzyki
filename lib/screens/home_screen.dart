@@ -119,12 +119,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ] else ...[
-                Text('🎵 Moja Kolekcja',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text('🎵 Moja Kolekcja',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
                 // Przyciski
                 IconButton(
                   icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
