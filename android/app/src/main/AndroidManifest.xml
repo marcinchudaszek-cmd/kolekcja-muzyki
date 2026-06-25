@@ -70,6 +70,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Android Auto: deklaracja aplikacji medialnej -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
     </application>
     
     <!-- Queries dla url_launcher -->

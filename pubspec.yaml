@@ -3,7 +3,7 @@ description: Zarządzaj swoją kolekcją muzyki - pełny odtwarzacz z dostępem 
 
 publish_to: 'none'
 
-version: 1.3.3+19
+version: 1.4.0+20
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -20,7 +20,7 @@ dependencies:
   
   # Audio
   just_audio: ^0.9.36
-  just_audio_background: ^0.0.1-beta.11
+  audio_service: ^0.18.15
   on_audio_query: ^2.9.0
   
   # Google Drive backup

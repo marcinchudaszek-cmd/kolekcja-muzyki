@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:audio_service/audio_service.dart' as audio_service;
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'models/album.dart';
 import 'models/listening_history.dart';
 import 'services/audio_service.dart';
+import 'services/audio_player_handler.dart';
 import 'services/database_service.dart';
 import 'services/history_service.dart';
 import 'services/backup_service.dart';
@@ -14,7 +16,7 @@ import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Inicjalizacja Hive (lokalna baza danych)
   await Hive.initFlutter();
   Hive.registerAdapter(AlbumAdapter());
@@ -22,7 +24,20 @@ void main() async {
   Hive.registerAdapter(ListeningRecordAdapter());
   await Hive.openBox<Album>('albums');
   await Hive.openBox<ListeningRecord>('listening_history');
-  
+
+  // Sesja medialna: ekran blokady, powiadomienie i Android Auto.
+  // Box 'albums' jest juz otwarty, wiec drzewo przegladania ma dostep do
+  // kolekcji od razu po starcie.
+  final audioHandler = await audio_service.AudioService.init(
+    builder: () => AudioPlayerHandler(),
+    config: const audio_service.AudioServiceConfig(
+      androidNotificationChannelId: 'com.beagleappsstudio.kolekcjamuzyki.audio',
+      androidNotificationChannelName: 'Odtwarzanie',
+      androidNotificationOngoing: true,
+      androidStopForegroundOnPause: true,
+    ),
+  );
+
   // Ustaw orientacje na portrait
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -35,17 +50,19 @@ void main() async {
     statusBarIconBrightness: Brightness.light,
   ));
   
-  runApp(const MyApp());
+  runApp(MyApp(audioHandler: audioHandler));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.audioHandler});
+
+  final AudioPlayerHandler audioHandler;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AudioService()),
+        ChangeNotifierProvider(create: (_) => AudioService(audioHandler)),
         ChangeNotifierProvider(create: (_) => DatabaseService()),
         ChangeNotifierProvider(create: (_) => HistoryService()),
         ChangeNotifierProvider(create: (_) => BackupService()),
