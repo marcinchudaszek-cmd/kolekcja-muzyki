@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -15,6 +16,42 @@ class AudioService extends ChangeNotifier {
 
   AudioService(this._handler) {
     _handler.onChanged = notifyListeners;
+    _handler.resolveUri = _resolvePathToUri;
+  }
+
+  static const MethodChannel _mediaStore = MethodChannel('kolekcja/mediastore');
+
+  /// Cache mapy: surowa sciezka pliku -> content:// URI z MediaStore.
+  Map<String, String>? _pathToUri;
+
+  /// Zamienia surowa sciezke (`/storage/...`) na content:// URI z MediaStore.
+  /// Na Androidzie 13+ tylko URI respektuje uprawnienie READ_MEDIA_AUDIO —
+  /// odtwarzanie po surowej sciezce konczy sie bledem EACCES.
+  Future<String?> _resolvePathToUri(String path) async {
+    if (path.startsWith('content://')) return path;
+    if (!Platform.isAndroid) return null;
+
+    // 1. Natywny ContentResolver — niezawodny, niezalezny od on_audio_query.
+    try {
+      final uri = await _mediaStore.invokeMethod<String>(
+        'uriForPath',
+        {'path': path},
+      );
+      if (uri != null && uri.isNotEmpty) return uri;
+    } catch (_) {
+      // np. kanal niedostepny w trybie headless — sprobuj fallbacku nizej.
+    }
+
+    // 2. Fallback: on_audio_query (gdyby kanal natywny byl niedostepny).
+    try {
+      _pathToUri ??= {
+        for (final s in await _audioQuery.querySongs(uriType: UriType.EXTERNAL))
+          if (s.data.isNotEmpty && (s.uri ?? '').isNotEmpty) s.data: s.uri!,
+      };
+      return _pathToUri![path];
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Callback do zapisu historii odtwarzania.
@@ -124,10 +161,17 @@ class AudioService extends ChangeNotifier {
 
   // ----- Sterowanie (delegowane do handlera) -----
 
-  Future<void> playTrack(Album album, int trackIndex) =>
-      _handler.playTrack(album, trackIndex);
+  Future<void> playTrack(Album album, int trackIndex) async {
+    // Na Androidzie 13+ odczyt pliku audio wymaga READ_MEDIA_AUDIO —
+    // upewnij sie, ze jest przyznane zanim odtwarzacz otworzy plik.
+    await checkPermissions();
+    return _handler.playTrack(album, trackIndex);
+  }
 
-  Future<void> playAlbum(Album album) => _handler.playAlbum(album);
+  Future<void> playAlbum(Album album) async {
+    await checkPermissions();
+    return _handler.playAlbum(album);
+  }
 
   Future<void> togglePlayPause() => _handler.togglePlayPause();
 

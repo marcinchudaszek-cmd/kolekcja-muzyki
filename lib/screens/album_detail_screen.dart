@@ -255,12 +255,26 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          audio.playAlbum(currentAlbum);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const PlayerScreen()),
-                          );
+                        onPressed: () async {
+                          try {
+                            await audio.playAlbum(currentAlbum);
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const PlayerScreen()),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Błąd odtwarzania: $e'),
+                                  duration: const Duration(seconds: 10),
+                                ),
+                              );
+                            }
+                          }
                         },
                         icon: const Icon(Icons.play_arrow),
                         label: const Text('Odtworz album'),
@@ -348,12 +362,26 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     ],
                   ),
                   onTap: track.hasFile
-                      ? () {
-                          audio.playTrack(currentAlbum, index);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const PlayerScreen()),
-                          );
+                      ? () async {
+                          try {
+                            await audio.playTrack(currentAlbum, index);
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const PlayerScreen()),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Błąd odtwarzania: $e'),
+                                  duration: const Duration(seconds: 10),
+                                ),
+                              );
+                            }
+                          }
                         }
                       : null,
                 );

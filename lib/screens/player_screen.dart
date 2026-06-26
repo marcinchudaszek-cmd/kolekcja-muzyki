@@ -399,9 +399,20 @@ class PlayerScreen extends StatelessWidget {
                       style: TextStyle(color: Colors.grey[400]),
                     ),
                     onTap: track.hasFile
-                        ? () {
-                            audio.playTrack(album, index);
-                            Navigator.pop(context);
+                        ? () async {
+                            try {
+                              await audio.playTrack(album, index);
+                              if (context.mounted) Navigator.pop(context);
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Błąd odtwarzania: $e'),
+                                    duration: const Duration(seconds: 10),
+                                  ),
+                                );
+                              }
+                            }
                           }
                         : null,
                   );

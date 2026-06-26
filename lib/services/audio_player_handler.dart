@@ -33,6 +33,12 @@ class AudioPlayerHandler extends BaseAudioHandler {
   void Function(String albumId, String trackTitle, int durationSeconds)?
       onTrackPlayed;
 
+  /// Zamienia surowa sciezke pliku na content:// URI z MediaStore.
+  /// Ustawiany przez fasade (uzywa on_audio_query). Konieczny, bo na
+  /// Androidzie 13+ ExoPlayer nie moze otworzyc plikow w pamieci
+  /// wspoldzielonej po surowej sciezce (EACCES) — tylko po content URI.
+  Future<String?> Function(String path)? resolveUri;
+
   // Stan odtwarzania
   Album? _currentAlbum;
   int _currentTrackIndex = 0;
@@ -152,6 +158,23 @@ class AudioPlayerHandler extends BaseAudioHandler {
     );
   }
 
+  /// Buduje zrodlo audio dla utworu. Preferuje content:// URI (dziala z
+  /// uprawnieniem READ_MEDIA_AUDIO na Androidzie 13+); surowa sciezka pliku
+  /// jest tylko fallbackiem dla plikow w prywatnej pamieci aplikacji.
+  Future<AudioSource> _audioSourceFor(Track track) async {
+    final path = track.filePath!;
+    if (path.startsWith('content://')) {
+      return AudioSource.uri(Uri.parse(path));
+    }
+    // Mapuj surowa sciezke na content:// URI (wymagane na Androidzie 10+).
+    final resolved = await resolveUri?.call(path);
+    if (resolved != null && resolved.isNotEmpty) {
+      return AudioSource.uri(Uri.parse(resolved));
+    }
+    // Fallback dla plikow w prywatnej pamieci aplikacji.
+    return AudioSource.uri(Uri.file(path));
+  }
+
   // ----- Sterowanie odtwarzaniem (uzywane przez fasade i UI) -----
 
   Future<void> playTrack(Album album, int trackIndex) async {
@@ -175,7 +198,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
     mediaItem.add(_trackToMediaItem(album, trackIndex));
 
     try {
-      await _player.setFilePath(track.filePath!);
+      await _player.setAudioSource(await _audioSourceFor(track));
       await _player.play();
       onTrackPlayed?.call(album.id, track.title, track.durationSeconds ?? 0);
     } catch (e) {
