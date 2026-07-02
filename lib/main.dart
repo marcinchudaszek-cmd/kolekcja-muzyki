@@ -1,10 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:audio_service/audio_service.dart' as audio_service;
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'l10n/app_localizations.dart';
 import 'models/album.dart';
 import 'models/listening_history.dart';
 import 'services/audio_service.dart';
@@ -46,38 +48,56 @@ void main() async {
     ),
   );
 
+  // Wczytaj zapisany jezyk aplikacji.
+  final localeProvider = LocaleProvider();
+  await localeProvider.load();
+
   // Ustaw orientacje na portrait
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   // Ustaw kolor paska systemowego
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
   ));
-  
-  runApp(MyApp(audioHandler: audioHandler));
+
+  runApp(MyApp(audioHandler: audioHandler, localeProvider: localeProvider));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key, required this.audioHandler});
+  const MyApp({
+    super.key,
+    required this.audioHandler,
+    required this.localeProvider,
+  });
 
   final AudioPlayerHandler audioHandler;
+  final LocaleProvider localeProvider;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider.value(value: localeProvider),
         ChangeNotifierProvider(create: (_) => AudioService(audioHandler)),
         ChangeNotifierProvider(create: (_) => DatabaseService()),
         ChangeNotifierProvider(create: (_) => HistoryService()),
         ChangeNotifierProvider(create: (_) => BackupService()),
       ],
-      child: MaterialApp(
+      child: Consumer<LocaleProvider>(
+        builder: (context, localeProvider, _) => MaterialApp(
         title: 'Kolekcja Muzyki',
         debugShowCheckedModeBanner: false,
+        locale: localeProvider.locale,
+        supportedLocales: AppLang.values.map((l) => l.locale),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         // Na szerokich ekranach (web/desktop) ogranicz aplikację do
         // wycentrowanej kolumny o proporcjach telefonu.
         builder: (context, child) {
@@ -131,6 +151,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         home: const HomeScreen(),
+      ),
       ),
     );
   }

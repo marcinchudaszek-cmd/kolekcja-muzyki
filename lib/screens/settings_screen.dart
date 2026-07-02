@@ -1,12 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
-import 'package:path_provider/path_provider.dart';
+import '../l10n/app_localizations.dart';
 import '../services/database_service.dart';
 import '../services/cover_service.dart';
-import '../services/backup_service.dart';
 import 'audio_settings_screen.dart';
 import 'history_screen.dart';
 import 'recognize_screen.dart';
@@ -25,14 +24,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
+    final localeProvider = context.watch<LocaleProvider>();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ustawienia'),
+        title: Text(l.settings),
       ),
       body: ListView(
         children: [
+          // Sekcja: Wyglad / Jezyk
+          _buildSectionHeader(context, l.sectionAppearance),
+          ListTile(
+            leading: const Icon(Icons.language),
+            title: Text(l.language),
+            subtitle: Text(l.languageSubtitle),
+            trailing: DropdownButton<AppLang>(
+              value: localeProvider.lang,
+              underline: const SizedBox.shrink(),
+              onChanged: (lang) {
+                if (lang != null) localeProvider.setLang(lang);
+              },
+              items: [
+                for (final lang in AppLang.values)
+                  DropdownMenuItem(value: lang, child: Text(lang.label)),
+              ],
+            ),
+          ),
+
           // Sekcja: Okladki
-          _buildSectionHeader(context, 'Okladki'),
+          _buildSectionHeader(context, l.sectionCovers),
           ListTile(
             leading: _isDownloadingCovers
                 ? const SizedBox(
@@ -42,18 +62,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   )
                 : const Icon(Icons.image),
             title: Text(_isDownloadingCovers
-                ? 'Pobieranie... $_downloadProgress/$_downloadTotal'
-                : 'Pobierz brakujace okladki'),
-            subtitle: const Text('Pobierz okladki dla wszystkich albumow'),
+                ? l.downloadingCovers(_downloadProgress, _downloadTotal)
+                : l.downloadCovers),
+            subtitle: Text(l.downloadCoversSubtitle),
             onTap: _isDownloadingCovers ? null : () => _downloadAllCovers(context),
           ),
 
           // Sekcja: Odtwarzacz
-          _buildSectionHeader(context, 'Odtwarzacz'),
+          _buildSectionHeader(context, l.sectionPlayer),
           ListTile(
             leading: const Icon(Icons.equalizer),
-            title: const Text('Ustawienia dzwieku'),
-            subtitle: const Text('Equalizer, crossfade'),
+            title: Text(l.audioSettings),
+            subtitle: Text(l.audioSettingsSubtitle),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.push(
               context,
@@ -62,8 +82,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.history),
-            title: const Text('Historia sluchania'),
-            subtitle: const Text('Ostatnio odtwarzane, statystyki'),
+            title: Text(l.listeningHistory),
+            subtitle: Text(l.listeningHistorySubtitle),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.push(
               context,
@@ -72,8 +92,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.mic),
-            title: const Text('Rozpoznaj utwor'),
-            subtitle: const Text('Znajdz piosenke po dzwieku'),
+            title: Text(l.recognizeSong),
+            subtitle: Text(l.recognizeSongSubtitle),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.push(
               context,
@@ -82,32 +102,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
 
           // Sekcja: Dane
-          _buildSectionHeader(context, 'Dane'),
+          _buildSectionHeader(context, l.sectionData),
           ListTile(
             leading: const Icon(Icons.file_download),
-            title: const Text('Eksportuj kolekcje'),
-            subtitle: const Text('Zapisz kopie zapasowa jako JSON'),
+            title: Text(l.exportCollection),
+            subtitle: Text(l.exportCollectionSubtitle),
             onTap: () => _exportData(context),
           ),
           ListTile(
             leading: const Icon(Icons.file_upload),
-            title: const Text('Importuj kolekcje'),
-            subtitle: const Text('Wczytaj z pliku JSON'),
+            title: Text(l.importCollection),
+            subtitle: Text(l.importCollectionSubtitle),
             onTap: () => _importData(context),
           ),
           ListTile(
             leading: const Icon(Icons.delete_forever, color: Colors.red),
-            title: const Text('Wyczysc kolekcje', style: TextStyle(color: Colors.red)),
-            subtitle: const Text('Usun wszystkie albumy'),
+            title: Text(l.clearCollection, style: const TextStyle(color: Colors.red)),
+            subtitle: Text(l.clearCollectionSubtitle),
             onTap: () => _clearData(context),
           ),
 
           // Sekcja: Informacje
-          _buildSectionHeader(context, 'Informacje'),
+          _buildSectionHeader(context, l.sectionAbout),
           ListTile(
             leading: const Icon(Icons.info),
-            title: const Text('O aplikacji'),
-            subtitle: const Text('Kolekcja Muzyki v1.3'),
+            title: Text(l.about),
+            subtitle: Text('${l.appTitle} v1.4'),
             onTap: () => _showAboutDialog(context),
           ),
         ],
@@ -130,9 +150,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _downloadAllCovers(BuildContext context) async {
+    final l = L.read(context);
     final db = Provider.of<DatabaseService>(context, listen: false);
-    final albumsWithoutCovers = db.albums.where((a) => 
-      (a.coverUrl == null || a.coverUrl!.isEmpty) && 
+    final albumsWithoutCovers = db.albums.where((a) =>
+      (a.coverUrl == null || a.coverUrl!.isEmpty) &&
       (a.coverPath == null || a.coverPath!.isEmpty)
     ).toList();
 
@@ -141,12 +162,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Okladki'),
-            content: const Text('Wszystkie albumy maja juz okladki!'),
+            title: Text(l.coversTitle),
+            content: Text(l.allHaveCovers),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('OK'),
+                child: Text(l.ok),
               ),
             ],
           ),
@@ -181,12 +202,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Pobrano okladki dla $_downloadProgress albumow')),
+        SnackBar(content: Text(l.coversDownloaded(_downloadProgress))),
       );
     }
   }
 
   Future<void> _exportData(BuildContext context) async {
+    final l = L.read(context);
     final db = Provider.of<DatabaseService>(context, listen: false);
 
     try {
@@ -201,19 +223,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Zapisano: ${file.path}')),
+          SnackBar(content: Text(l.savedTo(file.path))),
         );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Blad eksportu: $e')),
+          SnackBar(content: Text(l.exportError(e))),
         );
       }
     }
   }
 
   Future<void> _importData(BuildContext context) async {
+    final l = L.read(context);
     final db = Provider.of<DatabaseService>(context, listen: false);
 
     try {
@@ -230,33 +253,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Zaimportowano $imported albumow')),
+            SnackBar(content: Text(l.importedAlbums(imported))),
           );
         }
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Blad importu: $e')),
+          SnackBar(content: Text(l.importError(e))),
         );
       }
     }
   }
 
   Future<void> _clearData(BuildContext context) async {
+    final l = L.read(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Wyczysc kolekcje?'),
-        content: const Text('Ta operacja usunie wszystkie albumy. Czy na pewno chcesz kontynuowac?'),
+        title: Text(l.clearCollection),
+        content: Text(l.clearCollectionConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Anuluj'),
+            child: Text(l.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Usun', style: TextStyle(color: Colors.red)),
+            child: Text(l.delete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -267,36 +291,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
       for (var album in db.albums.toList()) { db.deleteAlbum(album.id); }
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kolekcja wyczyszczona')),
+          SnackBar(content: Text(l.collectionCleared)),
         );
       }
     }
   }
 
   void _showAboutDialog(BuildContext context) {
+    final l = L.read(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Kolekcja Muzyki'),
-        content: const Column(
+        title: Text(l.appTitle),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Wersja 1.3.0'),
-            SizedBox(height: 16),
-            Text('Aplikacja do zarzadzania kolekcja muzyczna.'),
-            SizedBox(height: 8),
-            Text('Beagle Apps Studio'),
+            Text(l.version('1.4.2')),
+            const SizedBox(height: 16),
+            Text(l.aboutDescription),
+            const SizedBox(height: 8),
+            const Text('Beagle Apps Studio'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+            child: Text(l.ok),
           ),
         ],
       ),
     );
   }
 }
-
