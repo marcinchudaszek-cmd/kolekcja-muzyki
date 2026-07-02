@@ -184,6 +184,56 @@ class L {
   String get formatDigital => _t('Cyfrowy', 'Digital', 'Digital');
   String get formatCassette => _t('Kaseta', 'Cassette', 'Kassette');
 
+  // ===================== Szczegoly albumu =====================
+  String get albumNotFound => _t('Album nie znaleziony', 'Album not found', 'Album nicht gefunden');
+  String get addToWishlist =>
+      _t('Dodaj do listy życzeń', 'Add to wishlist', 'Zur Wunschliste hinzufügen');
+  String get removeFromWishlist =>
+      _t('Usuń z listy życzeń', 'Remove from wishlist', 'Von Wunschliste entfernen');
+  String get ratingLabel => _t('Ocena: ', 'Rating: ', 'Bewertung: ');
+  String get listenOnline => _t('Słuchaj online', 'Listen online', 'Online anhören');
+  String get searchYouTube =>
+      _t('Szukaj na YouTube', 'Search on YouTube', 'Auf YouTube suchen');
+  String get playAlbum => _t('Odtwórz album', 'Play album', 'Album abspielen');
+  String playbackError(Object e) =>
+      _t('Błąd odtwarzania: $e', 'Playback error: $e', 'Wiedergabefehler: $e');
+  String get trackList => _t('Lista utworów', 'Track list', 'Titelliste');
+  String tracksAvailable(int available, int total) => _t(
+      '$available/$total dostępnych', '$available/$total available', '$available/$total verfügbar');
+  String get deleteAlbumTitle => _t('Usunąć album?', 'Delete album?', 'Album löschen?');
+  String deleteAlbumConfirm(String title) => _t(
+      'Czy na pewno chcesz usunąć „$title"?',
+      'Are you sure you want to delete "$title"?',
+      'Möchtest du „$title" wirklich löschen?');
+  String get changeCover => _t('Zmień okładkę', 'Change cover', 'Cover ändern');
+  String get searchAuto =>
+      _t('Wyszukaj automatycznie', 'Search automatically', 'Automatisch suchen');
+  String get searchAutoSub => _t('Pobierz okładkę z internetu',
+      'Download cover from the internet', 'Cover aus dem Internet laden');
+  String get chooseSuggestion =>
+      _t('Wybierz z propozycji', 'Choose from suggestions', 'Aus Vorschlägen wählen');
+  String get chooseSuggestionSub =>
+      _t('Zobacz kilka opcji', 'See a few options', 'Einige Optionen ansehen');
+  String get pasteUrl => _t('Wklej URL', 'Paste URL', 'URL einfügen');
+  String get pasteUrlSub =>
+      _t('Podaj adres obrazka', 'Enter image address', 'Bildadresse eingeben');
+  String get removeCover => _t('Usuń okładkę', 'Remove cover', 'Cover entfernen');
+  String get coverRemoved => _t('Okładka usunięta', 'Cover removed', 'Cover entfernt');
+  String get searchingCover => _t('Szukam okładki...', 'Searching cover...', 'Suche Cover...');
+  String get coverUpdated =>
+      _t('Okładka zaktualizowana!', 'Cover updated!', 'Cover aktualisiert!');
+  String get coverNotFound =>
+      _t('Nie znaleziono okładki', 'Cover not found', 'Kein Cover gefunden');
+  String errorGeneric(Object e) => _t('Błąd: $e', 'Error: $e', 'Fehler: $e');
+  String get loadingSuggestions =>
+      _t('Pobieram propozycje...', 'Loading suggestions...', 'Lade Vorschläge...');
+  String get noSuggestions =>
+      _t('Nie znaleziono propozycji', 'No suggestions found', 'Keine Vorschläge gefunden');
+  String get chooseCover => _t('Wybierz okładkę', 'Choose cover', 'Cover wählen');
+  String get coverChanged => _t('Okładka zmieniona!', 'Cover changed!', 'Cover geändert!');
+  String get pasteCoverUrl =>
+      _t('Wklej URL okładki', 'Paste cover URL', 'Cover-URL einfügen');
+
   String get about => _t('O aplikacji', 'About', 'Über die App');
   String get aboutDescription => _t('Aplikacja do zarządzania kolekcją muzyczną.',
       'App for managing your music collection.', 'App zur Verwaltung deiner Musiksammlung.');

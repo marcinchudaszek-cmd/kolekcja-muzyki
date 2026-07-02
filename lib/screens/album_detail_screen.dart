@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../l10n/app_localizations.dart';
 import '../models/album.dart';
 import '../services/database_service.dart';
 import '../services/audio_service.dart';
@@ -24,7 +25,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   Widget build(BuildContext context) {
     final db = Provider.of<DatabaseService>(context);
     final audio = Provider.of<AudioService>(context);
-    
+    final l = L.of(context);
+
     Album? album;
     try {
       album = db.getAlbum(widget.albumId);
@@ -35,7 +37,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     if (album == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('Album nie znaleziony')),
+        body: Center(child: Text(l.albumNotFound)),
       );
     }
     
@@ -104,14 +106,14 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                       leading: Icon(
                         currentAlbum.isWishlist ? Icons.card_giftcard : Icons.card_giftcard_outlined,
                       ),
-                      title: Text(currentAlbum.isWishlist ? 'Usun z listy zyczen' : 'Dodaj do listy zyczen'),
+                      title: Text(currentAlbum.isWishlist ? l.removeFromWishlist : l.addToWishlist),
                     ),
                     onTap: () => db.toggleWishlist(currentAlbum.id),
                   ),
                   PopupMenuItem(
-                    child: const ListTile(
-                      leading: Icon(Icons.edit),
-                      title: Text('Edytuj'),
+                    child: ListTile(
+                      leading: const Icon(Icons.edit),
+                      title: Text(l.edit),
                     ),
                     onTap: () {
                       Future.delayed(Duration.zero, () {
@@ -125,9 +127,9 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     },
                   ),
                   PopupMenuItem(
-                    child: const ListTile(
-                      leading: Icon(Icons.delete, color: Colors.red),
-                      title: Text('Usun', style: TextStyle(color: Colors.red)),
+                    child: ListTile(
+                      leading: const Icon(Icons.delete, color: Colors.red),
+                      title: Text(l.delete, style: const TextStyle(color: Colors.red)),
                     ),
                     onTap: () => _confirmDelete(context, db, currentAlbum),
                   ),
@@ -158,17 +160,17 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     children: [
                       if (currentAlbum.year != null)
                         _buildChip(context, Icons.calendar_today, '${currentAlbum.year}'),
-                      _buildChip(context, Icons.music_note, '${currentAlbum.tracks.length} utworow'),
+                      _buildChip(context, Icons.music_note, l.tracksCount(currentAlbum.tracks.length)),
                       _buildChip(context, Icons.timer, currentAlbum.formattedDuration),
                       _buildChip(context, null, '${genreEmoji(currentAlbum.genre)} ${genreName(currentAlbum.genre)}'),
-                      _buildChip(context, Icons.album, _formatLabel(currentAlbum.format)),
+                      _buildChip(context, Icons.album, _formatLabel(l, currentAlbum.format)),
                     ],
                   ),
                   const SizedBox(height: 16),
                   
                   Row(
                     children: [
-                      const Text('Ocena: '),
+                      Text(l.ratingLabel),
                       ...List.generate(5, (i) => GestureDetector(
                         onTap: () => db.setRating(currentAlbum.id, i + 1),
                         child: Padding(
@@ -204,7 +206,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   const SizedBox(height: 24),
                   
                   Text(
-                    'Sluchaj online',
+                    l.listenOnline,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[400],
@@ -242,7 +244,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => _openYouTube(currentAlbum.artist, currentAlbum.title),
                       icon: const Icon(Icons.ondemand_video, color: Colors.red),
-                      label: const Text('Szukaj na YouTube'),
+                      label: Text(l.searchYouTube),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.all(12),
                       ),
@@ -269,7 +271,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Błąd odtwarzania: $e'),
+                                  content: Text(l.playbackError(e)),
                                   duration: const Duration(seconds: 10),
                                 ),
                               );
@@ -277,7 +279,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                           }
                         },
                         icon: const Icon(Icons.play_arrow),
-                        label: const Text('Odtworz album'),
+                        label: Text(l.playAlbum),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.all(16),
                         ),
@@ -288,16 +290,19 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   
                   Row(
                     children: [
-                      const Text(
-                        'Lista utworow',
-                        style: TextStyle(
+                      Text(
+                        l.trackList,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const Spacer(),
                       Text(
-                        '${currentAlbum.tracks.where((t) => t.hasFile).length}/${currentAlbum.tracks.length} dostepnych',
+                        l.tracksAvailable(
+                          currentAlbum.tracks.where((t) => t.hasFile).length,
+                          currentAlbum.tracks.length,
+                        ),
                         style: TextStyle(color: Colors.grey[400], fontSize: 12),
                       ),
                     ],
@@ -376,7 +381,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Błąd odtwarzania: $e'),
+                                  content: Text(l.playbackError(e)),
                                   duration: const Duration(seconds: 10),
                                 ),
                               );
@@ -448,26 +453,27 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     );
   }
 
-  String _formatLabel(String format) {
+  String _formatLabel(L l, String format) {
     switch (format) {
       case 'cd': return 'CD';
-      case 'vinyl': return 'Winyl';
-      case 'digital': return 'Cyfrowy';
-      case 'cassette': return 'Kaseta';
+      case 'vinyl': return l.formatVinyl;
+      case 'digital': return l.formatDigital;
+      case 'cassette': return l.formatCassette;
       default: return format;
     }
   }
 
   void _confirmDelete(BuildContext context, DatabaseService db, Album album) {
+    final l = L.read(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Usun album?'),
-        content: Text('Czy na pewno chcesz usunac "${album.title}"?'),
+        title: Text(l.deleteAlbumTitle),
+        content: Text(l.deleteAlbumConfirm(album.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Anuluj'),
+            child: Text(l.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -475,7 +481,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: const Text('Usun', style: TextStyle(color: Colors.red)),
+            child: Text(l.delete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -509,6 +515,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 
   void _showCoverOptions(BuildContext context, DatabaseService db, Album album) {
     final parentContext = context;
+    final l = L.read(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -520,15 +527,15 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Zmien okladke',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              l.changeCover,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
             ListTile(
               leading: const Icon(Icons.search),
-              title: const Text('Wyszukaj automatycznie'),
-              subtitle: const Text('Pobierz okladke z internetu'),
+              title: Text(l.searchAuto),
+              subtitle: Text(l.searchAutoSub),
               onTap: () {
                   Navigator.pop(parentContext);
                   _searchCover(parentContext, db, album);
@@ -536,8 +543,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.grid_view),
-              title: const Text('Wybierz z propozycji'),
-              subtitle: const Text('Zobacz kilka opcji'),
+              title: Text(l.chooseSuggestion),
+              subtitle: Text(l.chooseSuggestionSub),
               onTap: () {
                   Navigator.pop(parentContext);
                   _showCoverSuggestions(parentContext, db, album);
@@ -545,8 +552,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.link),
-              title: const Text('Wklej URL'),
-              subtitle: const Text('Podaj adres obrazka'),
+              title: Text(l.pasteUrl),
+              subtitle: Text(l.pasteUrlSub),
               onTap: () {
                   Navigator.pop(parentContext);
                   _enterCoverUrl(parentContext, db, album);
@@ -555,12 +562,12 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
             if (album.coverUrl != null && album.coverUrl!.isNotEmpty)
               ListTile(
                 leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text('Usun okladke', style: TextStyle(color: Colors.red)),
+                title: Text(l.removeCover, style: const TextStyle(color: Colors.red)),
                 onTap: () {
                   db.updateCover(album.id, '');
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Okladka usunieta')),
+                    SnackBar(content: Text(l.coverRemoved)),
                   );
                 },
               ),
@@ -573,20 +580,21 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   void _searchCover(BuildContext context, DatabaseService db, Album album) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    
+    final l = L.read(context);
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => const Center(
+      builder: (ctx) => Center(
         child: Card(
           child: Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Szukam okladki...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(l.searchingCover),
               ],
             ),
           ),
@@ -603,16 +611,16 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
       if (coverUrl != null && coverUrl.isNotEmpty) {
         db.updateCover(album.id, coverUrl);
         scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('Okladka zaktualizowana!'),
+          SnackBar(
+            content: Text(l.coverUpdated),
             backgroundColor: Colors.green,
           ),
         );
         setState(() {});
       } else {
         scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('Nie znaleziono okladki'),
+          SnackBar(
+            content: Text(l.coverNotFound),
             backgroundColor: Colors.orange,
           ),
         );
@@ -621,7 +629,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
       if (!mounted) return;
       navigator.pop();
       scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text('Blad: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text(l.errorGeneric(e)), backgroundColor: Colors.red),
       );
     }
   }
@@ -630,20 +638,21 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final theme = Theme.of(context);
-    
+    final l = L.read(context);
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => const Center(
+      builder: (ctx) => Center(
         child: Card(
           child: Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Pobieram propozycje...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(l.loadingSuggestions),
               ],
             ),
           ),
@@ -659,7 +668,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
       
       if (suggestions.isEmpty) {
         scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text('Nie znaleziono propozycji')),
+          SnackBar(content: Text(l.noSuggestions)),
         );
         return;
       }
@@ -689,11 +698,11 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.all(16),
+              Padding(
+                padding: const EdgeInsets.all(16),
                 child: Text(
-                  'Wybierz okladke',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  l.chooseCover,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
               Expanded(
@@ -714,8 +723,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                         db.updateCover(album.id, suggestion.url);
                         Navigator.pop(sheetContext);
                         scaffoldMessenger.showSnackBar(
-                          const SnackBar(
-                            content: Text('Okladka zmieniona!'),
+                          SnackBar(
+                            content: Text(l.coverChanged),
                             backgroundColor: Colors.green,
                           ),
                         );
@@ -783,18 +792,19 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
       if (!mounted) return;
       navigator.pop();
       scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text('Blad: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text(l.errorGeneric(e)), backgroundColor: Colors.red),
       );
     }
   }
 
   void _enterCoverUrl(BuildContext context, DatabaseService db, Album album) {
     final controller = TextEditingController(text: album.coverUrl ?? '');
-    
+    final l = L.read(context);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Wklej URL okladki'),
+        title: Text(l.pasteCoverUrl),
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(
@@ -806,7 +816,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Anuluj'),
+            child: Text(l.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -815,14 +825,14 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                 db.updateCover(album.id, url);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Okladka zmieniona!'),
+                  SnackBar(
+                    content: Text(l.coverChanged),
                     backgroundColor: Colors.green,
                   ),
                 );
               }
             },
-            child: const Text('Zapisz'),
+            child: Text(l.save),
           ),
         ],
       ),
