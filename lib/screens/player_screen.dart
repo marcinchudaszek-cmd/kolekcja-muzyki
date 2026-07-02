@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:just_audio/just_audio.dart';
+import '../l10n/app_localizations.dart';
 import '../services/audio_service.dart';
 import '../models/album.dart';
 import 'karaoke_screen.dart';
@@ -15,13 +16,14 @@ class PlayerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final audio = Provider.of<AudioService>(context);
+    final l = L.of(context);
     final album = audio.currentAlbum;
     final track = audio.currentTrack;
 
     if (track == null || album == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('Brak odtwarzanego utworu')),
+        body: Center(child: Text(l.noTrackPlaying)),
       );
     }
 
@@ -54,7 +56,7 @@ class PlayerScreen extends StatelessWidget {
                     Column(
                       children: [
                         Text(
-                          'ODTWARZANE Z',
+                          l.playingFrom,
                           style: TextStyle(
                             fontSize: 10,
                             color: Colors.grey[400],
@@ -275,7 +277,7 @@ class PlayerScreen extends StatelessWidget {
                     TextButton.icon(
                       onPressed: () => _showTrackList(context, audio, album),
                       icon: const Icon(Icons.queue_music),
-                      label: const Text('Lista'),
+                      label: Text(l.queueShort),
                     ),
                     const SizedBox(width: 24),
                     TextButton.icon(
@@ -329,6 +331,7 @@ class PlayerScreen extends StatelessWidget {
   }
 
   void _showTrackList(BuildContext context, AudioService audio, Album album) {
+    final l = L.read(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -354,7 +357,7 @@ class PlayerScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Lista utworow',
+                l.trackList,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
@@ -407,7 +410,7 @@ class PlayerScreen extends StatelessWidget {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Błąd odtwarzania: $e'),
+                                    content: Text(l.playbackError(e)),
                                     duration: const Duration(seconds: 10),
                                   ),
                                 );
@@ -426,6 +429,7 @@ class PlayerScreen extends StatelessWidget {
   }
 
   void _showTrackOptions(BuildContext context, AudioService audio) {
+    final l = L.read(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -439,7 +443,7 @@ class PlayerScreen extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.album),
-              title: const Text('Przejdź do albumu'),
+              title: Text(l.goToAlbum),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pop(context);
@@ -447,7 +451,7 @@ class PlayerScreen extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.share),
-              title: const Text('Udostępnij'),
+              title: Text(l.share),
               onTap: () {
                 Navigator.pop(context);
                 // TODO: Share

@@ -234,6 +234,14 @@ class L {
   String get pasteCoverUrl =>
       _t('Wklej URL okładki', 'Paste cover URL', 'Cover-URL einfügen');
 
+  // ===================== Odtwarzacz =====================
+  String get noTrackPlaying =>
+      _t('Brak odtwarzanego utworu', 'No track playing', 'Kein Titel wird abgespielt');
+  String get playingFrom => _t('ODTWARZANE Z', 'PLAYING FROM', 'WIRD ABGESPIELT VON');
+  String get queueShort => _t('Lista', 'Queue', 'Liste');
+  String get goToAlbum => _t('Przejdź do albumu', 'Go to album', 'Zum Album');
+  String get share => _t('Udostępnij', 'Share', 'Teilen');
+
   String get about => _t('O aplikacji', 'About', 'Über die App');
   String get aboutDescription => _t('Aplikacja do zarządzania kolekcją muzyczną.',
       'App for managing your music collection.', 'App zur Verwaltung deiner Musiksammlung.');
