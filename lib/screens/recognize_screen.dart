@@ -1,14 +1,16 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../l10n/app_localizations.dart';
 
 class RecognizeScreen extends StatelessWidget {
   const RecognizeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Rozpoznaj utwor'),
+        title: Text(l.recognizeSong),
       ),
       body: Center(
         child: Padding(
@@ -26,7 +28,7 @@ class RecognizeScreen extends StatelessWidget {
                 child: const Icon(Icons.mic, size: 70, color: Colors.black),
               ),
               const SizedBox(height: 32),
-              const Text('Rozpoznaj utwor za pomoca:', style: TextStyle(fontSize: 18)),
+              Text(l.recognizeWith, style: const TextStyle(fontSize: 18)),
               const SizedBox(height: 24),
               
               Card(
@@ -36,14 +38,14 @@ class RecognizeScreen extends StatelessWidget {
                     children: [
                       const Text('Shazam', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      const Text('Pobierz ze Sklepu Play', style: TextStyle(color: Colors.grey)),
+                      Text(l.getFromPlayStore, style: const TextStyle(color: Colors.grey)),
                       const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () => _openApp('com.shazam.android'),
                           style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0088FF), padding: const EdgeInsets.all(12)),
-                          child: const Text('Pobierz Shazam'),
+                          child: Text(l.getApp('Shazam')),
                         ),
                       ),
                     ],
@@ -60,14 +62,14 @@ class RecognizeScreen extends StatelessWidget {
                     children: [
                       const Text('SoundHound', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      const Text('Pobierz ze Sklepu Play', style: TextStyle(color: Colors.grey)),
+                      Text(l.getFromPlayStore, style: const TextStyle(color: Colors.grey)),
                       const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () => _openApp('com.melodis.midomiMusicIdentifier.freemium'),
                           style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6600), padding: const EdgeInsets.all(12)),
-                          child: const Text('Pobierz SoundHound'),
+                          child: Text(l.getApp('SoundHound')),
                         ),
                       ),
                     ],
@@ -80,7 +82,7 @@ class RecognizeScreen extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: () => _openUrl('https://www.google.com/search?q=what+song+is+this+lyrics'),
                 icon: const Icon(Icons.search),
-                label: const Text('Szukaj tekstu w Google'),
+                label: Text(l.searchLyricsGoogle),
               ),
               
               const SizedBox(height: 24),

@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/album.dart';
 import '../services/database_service.dart';
+import '../l10n/app_localizations.dart';
 import '../services/cover_service.dart';
 
 class ScannerScreen extends StatefulWidget {
@@ -43,7 +44,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Skanuj kod kreskowy'),
+        title: Text(L.of(context).scanBarcode),
       ),
       body: Column(
         children: [
@@ -63,7 +64,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Lub wpisz kod recznie:'),
+                Text(L.of(context).orEnterCode),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -85,7 +86,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                           _searchBarcode(_manualController.text);
                         }
                       },
-                      child: const Text('Szukaj'),
+                      child: Text(L.of(context).search),
                     ),
                   ],
                 ),
@@ -134,7 +135,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
           left: 0,
           right: 0,
           child: Text(
-            'Skieruj kamere na kod kreskowy plyty',
+            L.of(context).aimCamera,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
@@ -149,13 +150,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   Widget _buildResult() {
     if (_isSearching) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Szukam w bazie MusicBrainz...'),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(L.of(context).searchingMusicBrainz),
           ],
         ),
       );
@@ -179,7 +180,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ElevatedButton.icon(
                 onPressed: _resetScanner,
                 icon: const Icon(Icons.qr_code_scanner),
-                label: const Text('Skanuj ponownie'),
+                label: Text(L.of(context).scanAgain),
               ),
             ],
           ),
@@ -188,8 +189,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
     }
 
     if (_foundRelease != null) {
-      final artist = _foundRelease!['artist'] ?? 'Nieznany';
-      final title = _foundRelease!['title'] ?? 'Bez tytulu';
+      final artist = _foundRelease!['artist'] ?? L.of(context).unknownArtist;
+      final title = _foundRelease!['title'] ?? L.of(context).untitled;
       final year = _foundRelease!['year'] ?? '';
       final tracks = _foundRelease!['tracks'] as List? ?? [];
 
@@ -208,11 +209,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.check_circle, color: Colors.green),
-                      SizedBox(width: 8),
-                      Text('Znaleziono album!', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Icon(Icons.check_circle, color: Colors.green),
+                      const SizedBox(width: 8),
+                      Text(L.of(context).albumFound, style: const TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -240,7 +241,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             if (tracks.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                'Lista utworow (${tracks.length})',
+                L.of(context).trackListCount(tracks.length),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
@@ -276,7 +277,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _resetScanner,
                     icon: const Icon(Icons.qr_code_scanner),
-                    label: const Text('Skanuj inny'),
+                    label: Text(L.of(context).scanAnother),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -284,7 +285,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   child: ElevatedButton.icon(
                     onPressed: () => _addAlbum(context),
                     icon: const Icon(Icons.add),
-                    label: const Text('Dodaj'),
+                    label: Text(L.of(context).add),
                   ),
                 ),
               ],
@@ -294,10 +295,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
       );
     }
 
-    return const Center(child: Text('Zeskanuj kod kreskowy'));
+    return Center(child: Text(L.of(context).scanBarcodePrompt));
   }
 
   Future<void> _searchBarcode(String barcode) async {
+    final l = L.read(context);
     setState(() {
       _isScanning = false;
       _isSearching = true;
@@ -316,14 +318,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
       );
 
       if (searchResponse.statusCode != 200) {
-        throw Exception('Blad polaczenia');
+        throw Exception(l.connectionError);
       }
 
       final searchData = json.decode(searchResponse.body);
       final releases = searchData['releases'] as List?;
 
       if (releases == null || releases.isEmpty) {
-        throw Exception('Nie znaleziono albumu dla kodu: $barcode');
+        throw Exception(l.noAlbumForCode(barcode));
       }
 
       final release = releases[0];
@@ -336,7 +338,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       );
 
       if (detailsResponse.statusCode != 200) {
-        throw Exception('Blad pobierania szczegolow');
+        throw Exception(l.errorFetchingDetails);
       }
 
       final details = json.decode(detailsResponse.body);
@@ -395,16 +397,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   void _addAlbum(BuildContext context) async {
     if (_foundRelease == null) return;
+    final l = L.read(context);
 
     final db = Provider.of<DatabaseService>(context, listen: false);
-    final artist = _foundRelease!['artist'] ?? 'Nieznany';
-    final title = _foundRelease!['title'] ?? 'Bez tytulu';
+    final artist = _foundRelease!['artist'] ?? l.unknownArtist;
+    final title = _foundRelease!['title'] ?? l.untitled;
     
     // Sprawdz duplikaty
     if (db.isDuplicate(artist, title)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('⚠️ Album "$title" juz istnieje w kolekcji!'),
+          content: Text(l.albumExistsNamed(title)),
           backgroundColor: Colors.orange,
         ),
       );
@@ -415,16 +418,16 @@ class _ScannerScreenState extends State<ScannerScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => const Center(
+      builder: (ctx) => Center(
         child: Card(
           child: Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Pobieram okladke...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(l.downloadingCover),
               ],
             ),
           ),
@@ -457,7 +460,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       format: 'cd',
       rating: 3,
       tracks: tracks,
-      notes: 'Kod: $_scannedCode',
+      notes: l.codeLabel(_scannedCode ?? ''),
       coverUrl: coverUrl,
     );
 
@@ -466,15 +469,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
     if (added) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('✅ Dodano: ${album.title}${coverUrl != null ? ' (z okladka)' : ''}'),
+          content: Text(l.addedAlbum(album.title, coverUrl != null)),
           backgroundColor: Colors.green,
         ),
       );
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('⚠️ Ten album juz istnieje!'),
+        SnackBar(
+          content: Text(l.albumExists),
           backgroundColor: Colors.orange,
         ),
       );

@@ -320,6 +320,109 @@ class L {
   String get albumUpdated => _t('Album zaktualizowany', 'Album updated', 'Album aktualisiert');
   String get saveChanges => _t('Zapisz zmiany', 'Save changes', 'Änderungen speichern');
 
+  // ===================== Skaner kodow =====================
+  String get orEnterCode =>
+      _t('Lub wpisz kod ręcznie:', 'Or enter the code manually:', 'Oder Code manuell eingeben:');
+  String get aimCamera => _t('Skieruj kamerę na kod kreskowy płyty',
+      'Point the camera at the disc barcode', 'Kamera auf den Disc-Barcode richten');
+  String get searchingMusicBrainz =>
+      _t('Szukam w bazie MusicBrainz...', 'Searching MusicBrainz...', 'Suche in MusicBrainz...');
+  String get untitled => _t('Bez tytułu', 'Untitled', 'Ohne Titel');
+  String get albumFound => _t('Znaleziono album!', 'Album found!', 'Album gefunden!');
+  String trackListCount(int n) =>
+      _t('Lista utworów ($n)', 'Track list ($n)', 'Titelliste ($n)');
+  String get scanAnother => _t('Skanuj inny', 'Scan another', 'Weiteren scannen');
+  String get scanBarcodePrompt =>
+      _t('Zeskanuj kod kreskowy', 'Scan a barcode', 'Barcode scannen');
+  String get connectionError => _t('Błąd połączenia', 'Connection error', 'Verbindungsfehler');
+  String noAlbumForCode(String code) => _t('Nie znaleziono albumu dla kodu: $code',
+      'No album found for code: $code', 'Kein Album für Code gefunden: $code');
+  String get errorFetchingDetails => _t('Błąd pobierania szczegółów',
+      'Error fetching details', 'Fehler beim Abrufen der Details');
+  String albumExistsNamed(String title) => _t(
+      '⚠️ Album „$title" już istnieje w kolekcji!',
+      '⚠️ Album "$title" already exists in the collection!',
+      '⚠️ Album „$title" ist bereits in der Sammlung!');
+  String codeLabel(String code) => _t('Kod: $code', 'Code: $code', 'Code: $code');
+  String addedAlbum(String title, bool withCover) => _t(
+      '✅ Dodano: $title${withCover ? ' (z okładką)' : ''}',
+      '✅ Added: $title${withCover ? ' (with cover)' : ''}',
+      '✅ Hinzugefügt: $title${withCover ? ' (mit Cover)' : ''}');
+
+  // ===================== Statystyki =====================
+  String get genresSection => _t('Gatunki', 'Genres', 'Genres');
+  String get formatsSection => _t('Formaty', 'Formats', 'Formate');
+  String get topArtists => _t('Top artyści', 'Top artists', 'Top-Künstler');
+  String get albumsByYear => _t('Albumy według lat', 'Albums by year', 'Alben nach Jahr');
+  String get noData => _t('Brak danych', 'No data', 'Keine Daten');
+  String get noYearData =>
+      _t('Brak danych o latach', 'No year data', 'Keine Jahresdaten');
+  String albumsAbbrev(int n) => _t('$n alb.', '$n alb.', '$n Alb.');
+
+  // ===================== Historia =====================
+  String get topAlbums => _t('Top Albumy', 'Top Albums', 'Top-Alben');
+  String get topTracks => _t('Top Utwory', 'Top Tracks', 'Top-Titel');
+  String get clearHistory => _t('Wyczyść historię', 'Clear history', 'Verlauf löschen');
+  String get noHistory =>
+      _t('Brak historii słuchania', 'No listening history', 'Kein Wiedergabeverlauf');
+  String get noHistoryDesc => _t('Odtwórz muzykę, a pojawi się tutaj!',
+      'Play some music and it will appear here!', 'Spiele Musik ab, dann erscheint sie hier!');
+  String get clearHistoryConfirmTitle =>
+      _t('Wyczyścić historię?', 'Clear history?', 'Verlauf löschen?');
+  String get clearHistoryConfirm => _t('Ta operacja usunie całą historię słuchania.',
+      'This will delete all listening history.', 'Dies löscht den gesamten Wiedergabeverlauf.');
+  String get historyCleared =>
+      _t('Historia wyczyszczona', 'History cleared', 'Verlauf gelöscht');
+
+  // ===================== Ustawienia dzwieku =====================
+  String get crossfadeSection =>
+      _t('Płynne przejścia (Crossfade)', 'Crossfade', 'Überblendung (Crossfade)');
+  String get enableCrossfade => _t('Włącz crossfade', 'Enable crossfade', 'Crossfade aktivieren');
+  String get crossfadeDesc => _t('Płynne przejście między utworami',
+      'Smooth transition between tracks', 'Sanfter Übergang zwischen Titeln');
+  String get crossfadeDuration =>
+      _t('Czas przejścia', 'Transition time', 'Übergangszeit');
+  String secondsCount(int n) => _t('$n sekund', '$n seconds', '$n Sekunden');
+  String get openSystemEq =>
+      _t('Otwórz systemowy equalizer', 'Open system equalizer', 'System-Equalizer öffnen');
+  String get eqDesc => _t('Dostosuj tony niskie i wysokie',
+      'Adjust bass and treble', 'Bässe und Höhen anpassen');
+  String get crossfadeInfo => _t(
+      '• Crossfade tworzy płynne przejście między utworami\n\n',
+      '• Crossfade creates a smooth transition between tracks\n\n',
+      '• Crossfade sorgt für sanfte Übergänge zwischen Titeln\n\n');
+  String get eqInfo => _t(
+      '• Equalizer systemowy pozwala dostosować częstotliwości dla wszystkich aplikacji',
+      '• The system equalizer lets you adjust frequencies for all apps',
+      '• Der System-Equalizer passt die Frequenzen für alle Apps an');
+  String get eqInstructions => _t(
+      'Aby otworzyć equalizer:\n\n1. Otwórz Ustawienia telefonu\n2. Przejdź do: Dźwięk i wibracje\n3. Znajdź: Jakość dźwięku / Equalizer\n\nLub pobierz aplikację Equalizer ze Sklepu Play.',
+      'To open the equalizer:\n\n1. Open phone Settings\n2. Go to: Sound & vibration\n3. Find: Sound quality / Equalizer\n\nOr download an Equalizer app from the Play Store.',
+      'So öffnest du den Equalizer:\n\n1. Telefon-Einstellungen öffnen\n2. Zu: Ton & Vibration\n3. Finde: Klangqualität / Equalizer\n\nOder lade eine Equalizer-App aus dem Play Store.');
+  String get playStore => _t('Sklep Play', 'Play Store', 'Play Store');
+
+  // ===================== Rozpoznawanie utworu =====================
+  String get recognizeWith =>
+      _t('Rozpoznaj utwór za pomocą:', 'Recognize a song with:', 'Song erkennen mit:');
+  String get getFromPlayStore =>
+      _t('Pobierz ze Sklepu Play', 'Get from Play Store', 'Aus dem Play Store laden');
+  String getApp(String name) => _t('Pobierz $name', 'Get $name', '$name laden');
+  String get searchLyricsGoogle =>
+      _t('Szukaj tekstu w Google', 'Search lyrics on Google', 'Songtext bei Google suchen');
+  String get recognizeHint => _t(
+      'Po zainstalowaniu Shazam lub SoundHound,\nuruchom je ręcznie z ekranu głównego.',
+      'After installing Shazam or SoundHound,\nlaunch them manually from the home screen.',
+      'Nach der Installation von Shazam oder SoundHound\nstarte sie manuell vom Startbildschirm.');
+
+  // ===================== Karaoke =====================
+  String noLyricsFor(String title) => _t('Nie znaleziono tekstu dla „$title"',
+      'No lyrics found for "$title"', 'Kein Songtext für „$title" gefunden');
+  String get lyricsError =>
+      _t('Błąd pobierania tekstu', 'Error fetching lyrics', 'Fehler beim Laden des Songtexts');
+  String get searchingLyrics => _t('Szukam tekstu...', 'Searching lyrics...', 'Suche Songtext...');
+  String get tryAgain => _t('Spróbuj ponownie', 'Try again', 'Erneut versuchen');
+  String get noLyrics => _t('Brak tekstu', 'No lyrics', 'Kein Songtext');
+
   String get about => _t('O aplikacji', 'About', 'Über die App');
   String get aboutDescription => _t('Aplikacja do zarządzania kolekcją muzyczną.',
       'App for managing your music collection.', 'App zur Verwaltung deiner Musiksammlung.');

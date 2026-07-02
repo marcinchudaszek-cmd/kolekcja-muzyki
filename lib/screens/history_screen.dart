@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/history_service.dart';
 import '../services/database_service.dart';
 import '../models/album.dart';
+import '../l10n/app_localizations.dart';
 import 'album_detail_screen.dart';
 
 class HistoryScreen extends StatelessWidget {
@@ -10,25 +11,26 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return DefaultTabController(
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Historia sluchania'),
-          bottom: const TabBar(
+          title: Text(l.listeningHistory),
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Ostatnie'),
-              Tab(text: 'Top Albumy'),
-              Tab(text: 'Top Utwory'),
+              Tab(text: l.sortRecentShort),
+              Tab(text: l.topAlbums),
+              Tab(text: l.topTracks),
             ],
           ),
           actions: [
             PopupMenuButton(
               itemBuilder: (context) => [
                 PopupMenuItem(
-                  child: const ListTile(
-                    leading: Icon(Icons.delete_forever, color: Colors.red),
-                    title: Text('Wyczysc historie'),
+                  child: ListTile(
+                    leading: const Icon(Icons.delete_forever, color: Colors.red),
+                    title: Text(l.clearHistory),
                   ),
                   onTap: () => _confirmClear(context),
                 ),
@@ -55,16 +57,16 @@ class HistoryScreen extends StatelessWidget {
     final recentIds = history.getRecentAlbumIds(limit: 20);
     
     if (recentIds.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.history, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('Brak historii sluchania', style: TextStyle(color: Colors.grey)),
-            SizedBox(height: 8),
-            Text('Odtworz muzyke, a pojawi sie tutaj!', 
-              style: TextStyle(color: Colors.grey, fontSize: 12)),
+            const Icon(Icons.history, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(L.of(context).noHistory, style: const TextStyle(color: Colors.grey)),
+            const SizedBox(height: 8),
+            Text(L.of(context).noHistoryDesc,
+              style: const TextStyle(color: Colors.grey, fontSize: 12)),
           ],
         ),
       );
@@ -128,8 +130,8 @@ class HistoryScreen extends StatelessWidget {
     final topAlbums = history.getTopAlbums(db.allAlbums, limit: 20);
     
     if (topAlbums.isEmpty) {
-      return const Center(
-        child: Text('Brak danych', style: TextStyle(color: Colors.grey)),
+      return Center(
+        child: Text(L.of(context).noData, style: const TextStyle(color: Colors.grey)),
       );
     }
 
@@ -194,8 +196,8 @@ class HistoryScreen extends StatelessWidget {
     final topTracks = history.getTopTracks(limit: 30);
     
     if (topTracks.isEmpty) {
-      return const Center(
-        child: Text('Brak danych', style: TextStyle(color: Colors.grey)),
+      return Center(
+        child: Text(L.of(context).noData, style: const TextStyle(color: Colors.grey)),
       );
     }
 
@@ -244,26 +246,27 @@ class HistoryScreen extends StatelessWidget {
   }
 
   void _confirmClear(BuildContext context) {
+    final l = L.read(context);
     Future.delayed(Duration.zero, () {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Wyczyscic historie?'),
-          content: const Text('Ta operacja usunie cala historie sluchania.'),
+          title: Text(l.clearHistoryConfirmTitle),
+          content: Text(l.clearHistoryConfirm),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Anuluj'),
+              child: Text(l.cancel),
             ),
             TextButton(
               onPressed: () {
                 Provider.of<HistoryService>(context, listen: false).clearHistory();
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Historia wyczyszczona')),
+                  SnackBar(content: Text(l.historyCleared)),
                 );
               },
-              child: const Text('Wyczysc', style: TextStyle(color: Colors.red)),
+              child: Text(l.clearShort, style: const TextStyle(color: Colors.red)),
             ),
           ],
         ),

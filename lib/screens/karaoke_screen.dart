@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../services/audio_service.dart';
 import '../services/lyrics_service.dart';
 
@@ -24,10 +25,11 @@ class _KaraokeScreenState extends State<KaraokeScreen> {
 
   Future<void> _loadLyrics() async {
     final audio = Provider.of<AudioService>(context, listen: false);
-    
+    final l = L.read(context);
+
     if (audio.currentAlbum == null || audio.currentTrackIndex < 0) {
       setState(() {
-        _error = 'Brak odtwarzanego utworu';
+        _error = l.noTrackPlaying;
         _isLoading = false;
       });
       return;
@@ -57,14 +59,14 @@ class _KaraokeScreenState extends State<KaraokeScreen> {
           _lyrics = lyrics;
           _isLoading = false;
           if (lyrics == null || lyrics.isEmpty) {
-            _error = 'Nie znaleziono tekstu dla "${track.title}"';
+            _error = l.noLyricsFor(track.title);
           }
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Blad pobierania tekstu';
+          _error = l.lyricsError;
           _isLoading = false;
         });
       }
@@ -130,15 +132,15 @@ class _KaraokeScreenState extends State<KaraokeScreen> {
 
   Widget _buildLyricsView(AudioService audio) {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: Colors.white),
-            SizedBox(height: 16),
+            const CircularProgressIndicator(color: Colors.white),
+            const SizedBox(height: 16),
             Text(
-              'Szukam tekstu...',
-              style: TextStyle(color: Colors.white70),
+              L.of(context).searchingLyrics,
+              style: const TextStyle(color: Colors.white70),
             ),
           ],
         ),
@@ -166,7 +168,7 @@ class _KaraokeScreenState extends State<KaraokeScreen> {
                   _loadLyrics();
                 },
                 icon: const Icon(Icons.refresh),
-                label: const Text('Sprobuj ponownie'),
+                label: Text(L.of(context).tryAgain),
               ),
             ],
           ),
@@ -175,10 +177,10 @@ class _KaraokeScreenState extends State<KaraokeScreen> {
     }
 
     if (_lyrics == null || _lyrics!.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'Brak tekstu',
-          style: TextStyle(color: Colors.grey),
+          L.of(context).noLyrics,
+          style: const TextStyle(color: Colors.grey),
         ),
       );
     }

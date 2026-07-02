@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../l10n/app_localizations.dart';
 import '../services/audio_service.dart';
 
 class AudioSettingsScreen extends StatelessWidget {
@@ -10,26 +11,27 @@ class AudioSettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ustawienia dzwieku'),
+        title: Text(L.of(context).audioSettings),
       ),
       body: Consumer<AudioService>(
         builder: (context, audio, child) {
+          final l = L.of(context);
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _buildSectionHeader(context, 'Plynne przejscia (Crossfade)'),
+              _buildSectionHeader(context, l.crossfadeSection),
               
               SwitchListTile(
-                title: const Text('Wlacz crossfade'),
-                subtitle: const Text('Plynne przejscie miedzy utworami'),
+                title: Text(l.enableCrossfade),
+                subtitle: Text(l.crossfadeDesc),
                 value: audio.crossfadeEnabled,
                 onChanged: (value) => audio.setCrossfade(value),
               ),
               
               if (audio.crossfadeEnabled) ...[
                 ListTile(
-                  title: const Text('Czas przejscia'),
-                  subtitle: Text('${audio.crossfadeDuration} sekund'),
+                  title: Text(l.crossfadeDuration),
+                  subtitle: Text(l.secondsCount(audio.crossfadeDuration)),
                   trailing: SizedBox(
                     width: 150,
                     child: Slider(
@@ -50,15 +52,15 @@ class AudioSettingsScreen extends StatelessWidget {
               
               ListTile(
                 leading: const Icon(Icons.equalizer),
-                title: const Text('Otworz systemowy equalizer'),
-                subtitle: const Text('Dostosuj tony niskie i wysokie'),
+                title: Text(l.openSystemEq),
+                subtitle: Text(l.eqDesc),
                 trailing: const Icon(Icons.open_in_new),
                 onTap: () => _openSystemEqualizer(context),
               ),
               
               const Divider(height: 32),
               
-              _buildSectionHeader(context, 'Informacje'),
+              _buildSectionHeader(context, l.sectionAbout),
               
               Card(
                 child: Padding(
@@ -93,6 +95,7 @@ class AudioSettingsScreen extends StatelessWidget {
   }
 
   void _openSystemEqualizer(BuildContext context) async {
+    final l = L.read(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -107,7 +110,7 @@ class AudioSettingsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+            child: Text(l.ok),
           ),
           TextButton(
             onPressed: () async {
@@ -115,7 +118,7 @@ class AudioSettingsScreen extends StatelessWidget {
               final url = Uri.parse('https://play.google.com/store/search?q=equalizer&c=apps');
               await launchUrl(url, mode: LaunchMode.externalApplication);
             },
-            child: const Text('Sklep Play'),
+            child: Text(l.playStore),
           ),
         ],
       ),

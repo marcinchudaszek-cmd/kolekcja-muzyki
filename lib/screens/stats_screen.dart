@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../models/album.dart';
 import '../services/database_service.dart';
 
@@ -9,10 +10,11 @@ class StatsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final db = Provider.of<DatabaseService>(context);
+    final l = L.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Statystyki'),
+        title: Text(l.statistics),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -20,45 +22,45 @@ class StatsScreen extends StatelessWidget {
           // Glowne liczniki
           Row(
             children: [
-              Expanded(child: _buildStatCard(context, Icons.album, db.totalAlbums.toString(), 'Albumow')),
+              Expanded(child: _buildStatCard(context, Icons.album, db.totalAlbums.toString(), l.labelAlbums)),
               const SizedBox(width: 12),
-              Expanded(child: _buildStatCard(context, Icons.music_note, db.totalTracks.toString(), 'Utworow')),
+              Expanded(child: _buildStatCard(context, Icons.music_note, db.totalTracks.toString(), l.labelTracks)),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _buildStatCard(context, Icons.favorite, db.favoriteCount.toString(), 'Ulubionych')),
+              Expanded(child: _buildStatCard(context, Icons.favorite, db.favoriteCount.toString(), l.labelFavorites)),
               const SizedBox(width: 12),
-              Expanded(child: _buildStatCard(context, Icons.card_giftcard, db.wishlistCount.toString(), 'Lista zyczen')),
+              Expanded(child: _buildStatCard(context, Icons.card_giftcard, db.wishlistCount.toString(), l.wishlist)),
             ],
           ),
           
           const SizedBox(height: 24),
           
           // Gatunki
-          _buildSectionTitle(context, 'Gatunki'),
+          _buildSectionTitle(context, l.genresSection),
           const SizedBox(height: 12),
           _buildGenreChart(context, db),
           
           const SizedBox(height: 24),
           
           // Formaty
-          _buildSectionTitle(context, 'Formaty'),
+          _buildSectionTitle(context, l.formatsSection),
           const SizedBox(height: 12),
           _buildFormatChart(context, db),
           
           const SizedBox(height: 24),
           
           // Top artysci
-          _buildSectionTitle(context, 'Top artysci'),
+          _buildSectionTitle(context, l.topArtists),
           const SizedBox(height: 12),
           _buildTopArtists(context, db),
           
           const SizedBox(height: 24),
           
           // Lata
-          _buildSectionTitle(context, 'Albumy wedlug lat'),
+          _buildSectionTitle(context, l.albumsByYear),
           const SizedBox(height: 12),
           _buildYearChart(context, db),
         ],
@@ -106,7 +108,7 @@ class StatsScreen extends StatelessWidget {
   Widget _buildGenreChart(BuildContext context, DatabaseService db) {
     final stats = db.genreStats;
     if (stats.isEmpty) {
-      return const Text('Brak danych');
+      return Text(L.of(context).noData);
     }
     
     final total = stats.values.fold(0, (a, b) => a + b);
@@ -160,7 +162,7 @@ class StatsScreen extends StatelessWidget {
   Widget _buildFormatChart(BuildContext context, DatabaseService db) {
     final stats = db.formatStats;
     if (stats.isEmpty) {
-      return const Text('Brak danych');
+      return Text(L.of(context).noData);
     }
     
     final formatLabels = {
@@ -210,7 +212,7 @@ class StatsScreen extends StatelessWidget {
     }
     
     if (artistCounts.isEmpty) {
-      return const Text('Brak danych');
+      return Text(L.of(context).noData);
     }
     
     final sorted = artistCounts.entries.toList()
@@ -251,7 +253,7 @@ class StatsScreen extends StatelessWidget {
             ),
             title: Text(artist.key),
             trailing: Text(
-              '${artist.value} alb.',
+              L.of(context).albumsAbbrev(artist.value),
               style: TextStyle(color: Colors.grey[400]),
             ),
           );
@@ -270,7 +272,7 @@ class StatsScreen extends StatelessWidget {
     }
     
     if (yearCounts.isEmpty) {
-      return const Text('Brak danych o latach');
+      return Text(L.of(context).noYearData);
     }
     
     final sorted = yearCounts.entries.toList()
