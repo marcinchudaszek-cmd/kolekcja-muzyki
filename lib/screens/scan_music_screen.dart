@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:on_audio_query/on_audio_query.dart';
-import '../models/album.dart';
+import '../l10n/app_localizations.dart';
 import '../services/audio_service.dart';
 import '../services/database_service.dart';
 
@@ -40,45 +40,47 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
   }
 
   Future<void> _scanMusic() async {
+    final l = L.read(context);
     setState(() {
       _isScanning = true;
-      _status = 'Skanowanie muzyki...';
+      _status = l.scanningMusic;
       _foundAlbums = [];
       _scannedCount = 0;
     });
 
     try {
       final audio = Provider.of<AudioService>(context, listen: false);
-      
+
       // Skanuj albumy
       final albums = await audio.scanAlbums();
-      
+
       setState(() {
         _totalCount = albums.length;
         _foundAlbums = albums;
         _selectedAlbums = Set.from(albums.map((a) => a.id));
         _isScanning = false;
-        _status = 'Znaleziono ${albums.length} albumow';
+        _status = l.foundAlbums(albums.length);
       });
     } catch (e) {
       setState(() {
         _isScanning = false;
-        _status = 'Blad: $e';
+        _status = l.errorGeneric(e);
       });
     }
   }
 
   Future<void> _importSelected() async {
+    final l = L.read(context);
     if (_selectedAlbums.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Wybierz przynajmniej jeden album')),
+        SnackBar(content: Text(l.selectAtLeastOne)),
       );
       return;
     }
 
     setState(() {
       _isScanning = true;
-      _status = 'Importowanie albumow...';
+      _status = l.importingAlbums;
       _scannedCount = 0;
     });
 
@@ -94,7 +96,7 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
       
       setState(() {
         _scannedCount = i + 1;
-        _status = 'Importowanie ${i + 1}/${selectedAlbums.length}: ${albumModel.album}';
+        _status = l.importingProgress(i + 1, selectedAlbums.length, albumModel.album);
       });
 
       try {
@@ -120,9 +122,9 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
     setState(() {
       _isScanning = false;
       if (skipped > 0) {
-        _status = 'Zaimportowano $imported nowych albumow ($skipped pominieto - duplikaty)';
+        _status = l.importedNewWithSkipped(imported, skipped);
       } else {
-        _status = 'Zaimportowano $imported nowych albumow';
+        _status = l.importedNew(imported);
       }
     });
 
@@ -130,7 +132,7 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
       if (imported > 0) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Zaimportowano $imported albumow${skipped > 0 ? ' ($skipped pominieto)' : ''}'),
+            content: Text(l.importedOk(imported, skipped)),
             backgroundColor: Colors.green,
           ),
         );
@@ -138,7 +140,7 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
       } else if (skipped > 0) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('⚠️ Wszystkie wybrane albumy ($skipped) juz istnieja w kolekcji'),
+            content: Text(l.allExist(skipped)),
             backgroundColor: Colors.orange,
           ),
         );
@@ -148,15 +150,16 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Skanuj muzyke'),
+        title: Text(l.scanMusicTitle),
         actions: [
           if (_foundAlbums.isNotEmpty && !_isScanning)
             TextButton.icon(
               onPressed: _importSelected,
               icon: const Icon(Icons.download),
-              label: Text('Importuj (${_selectedAlbums.length})'),
+              label: Text(l.importCount(_selectedAlbums.length)),
             ),
         ],
       ),
@@ -165,6 +168,7 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
   }
 
   Widget _buildBody() {
+    final l = L.of(context);
     // Brak uprawnien
     if (!_hasPermission) {
       return Center(
@@ -173,13 +177,13 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
           children: [
             const Icon(Icons.folder_off, size: 80, color: Colors.grey),
             const SizedBox(height: 16),
-            const Text(
-              'Brak dostepu do plikow',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              l.noAccessTitle,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Aplikacja potrzebuje dostepu do\nplikow muzycznych na urzadzeniu',
+              l.noAccessDesc,
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey[400]),
             ),
@@ -187,7 +191,7 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
             ElevatedButton.icon(
               onPressed: _checkPermissions,
               icon: const Icon(Icons.lock_open),
-              label: const Text('Udziel dostepu'),
+              label: Text(l.grantAccess),
             ),
           ],
         ),
@@ -233,20 +237,20 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
           children: [
             const Icon(Icons.music_off, size: 80, color: Colors.grey),
             const SizedBox(height: 16),
-            const Text(
-              'Nie znaleziono muzyki',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              l.noMusicTitle,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Nie znaleziono albumow w pamieci urzadzenia',
+              l.noMusicDesc,
               style: TextStyle(color: Colors.grey[400]),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: _scanMusic,
               icon: const Icon(Icons.refresh),
-              label: const Text('Skanuj ponownie'),
+              label: Text(l.scanAgain),
             ),
           ],
         ),
@@ -279,8 +283,8 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
                 },
                 child: Text(
                   _selectedAlbums.length == _foundAlbums.length
-                      ? 'Odznacz wszystkie'
-                      : 'Zaznacz wszystkie',
+                      ? l.deselectAll
+                      : l.selectAll,
                 ),
               ),
             ],
@@ -318,7 +322,7 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 subtitle: Text(
-                  album.artist ?? 'Nieznany artysta',
+                  album.artist ?? l.unknownArtist,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: Colors.grey[400]),
@@ -358,7 +362,7 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
               child: ElevatedButton.icon(
                 onPressed: _selectedAlbums.isNotEmpty ? _importSelected : null,
                 icon: const Icon(Icons.download),
-                label: Text('Importuj ${_selectedAlbums.length} albumow'),
+                label: Text(l.importAlbumsCount(_selectedAlbums.length)),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.all(16),
                 ),

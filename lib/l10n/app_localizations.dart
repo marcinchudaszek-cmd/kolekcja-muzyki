@@ -242,6 +242,66 @@ class L {
   String get goToAlbum => _t('Przejdź do albumu', 'Go to album', 'Zum Album');
   String get share => _t('Udostępnij', 'Share', 'Teilen');
 
+  // ===================== Skanowanie muzyki / folderu =====================
+  String get scanMusicTitle => _t('Skanuj muzykę', 'Scan music', 'Musik scannen');
+  String get scanFolderTitle => _t('Skanuj folder', 'Scan folder', 'Ordner scannen');
+  String get scanningMusic => _t('Skanowanie muzyki...', 'Scanning music...', 'Musik wird gescannt...');
+  String get scanningFolder => _t('Skanuję folder...', 'Scanning folder...', 'Ordner wird gescannt...');
+  String get selectFolder => _t('Wybierz folder z muzyką', 'Choose a music folder', 'Musikordner wählen');
+  String get chooseFolder => _t('Wybierz folder', 'Choose folder', 'Ordner wählen');
+  String foundAlbums(int count) =>
+      _t('Znaleziono $count albumów', 'Found $count albums', '$count Alben gefunden');
+  String get noAccessTitle =>
+      _t('Brak dostępu do plików', 'No file access', 'Kein Dateizugriff');
+  String get noAccessDesc => _t('Aplikacja potrzebuje dostępu do\nplików muzycznych na urządzeniu',
+      'The app needs access to\nmusic files on your device', 'Die App benötigt Zugriff auf\nMusikdateien auf dem Gerät');
+  String get grantAccess => _t('Udziel dostępu', 'Grant access', 'Zugriff gewähren');
+  String get noMusicTitle => _t('Nie znaleziono muzyki', 'No music found', 'Keine Musik gefunden');
+  String get noMusicDesc => _t('Nie znaleziono albumów w pamięci urządzenia',
+      'No albums found in device storage', 'Keine Alben im Gerätespeicher gefunden');
+  String get noAlbumsInFolder => _t('Nie znaleziono albumów w tym folderze',
+      'No albums found in this folder', 'Keine Alben in diesem Ordner gefunden');
+  String get scanAgain => _t('Skanuj ponownie', 'Scan again', 'Erneut scannen');
+  String get selectAll => _t('Zaznacz wszystkie', 'Select all', 'Alle auswählen');
+  String get deselectAll => _t('Odznacz wszystkie', 'Deselect all', 'Alle abwählen');
+  String importCount(int count) => _t('Importuj ($count)', 'Import ($count)', 'Importieren ($count)');
+  String importAlbumsCount(int count) =>
+      _t('Importuj $count albumów', 'Import $count albums', '$count Alben importieren');
+  String get selectAtLeastOne => _t('Wybierz przynajmniej jeden album',
+      'Select at least one album', 'Wähle mindestens ein Album');
+  String get importingAlbums => _t('Importowanie albumów...', 'Importing albums...', 'Alben werden importiert...');
+  String get importing => _t('Importuję...', 'Importing...', 'Importiere...');
+  String importingProgress(int i, int total, String album) => _t(
+      'Importowanie $i/$total: $album', 'Importing $i/$total: $album', 'Importiere $i/$total: $album');
+  String importedNew(int count) => _t('Zaimportowano $count nowych albumów',
+      'Imported $count new albums', '$count neue Alben importiert');
+  String importedNewWithSkipped(int imported, int skipped) => _t(
+      'Zaimportowano $imported nowych albumów ($skipped pominięto - duplikaty)',
+      'Imported $imported new albums ($skipped skipped - duplicates)',
+      '$imported neue Alben importiert ($skipped übersprungen - Duplikate)');
+  String importedOk(int imported, int skipped) => _t(
+      '✅ Zaimportowano $imported albumów${skipped > 0 ? ' ($skipped pominięto)' : ''}',
+      '✅ Imported $imported albums${skipped > 0 ? ' ($skipped skipped)' : ''}',
+      '✅ $imported Alben importiert${skipped > 0 ? ' ($skipped übersprungen)' : ''}');
+  String allExist(int skipped) => _t(
+      '⚠️ Wszystkie wybrane albumy ($skipped) już istnieją w kolekcji',
+      '⚠️ All selected albums ($skipped) already exist in the collection',
+      '⚠️ Alle ausgewählten Alben ($skipped) sind bereits in der Sammlung');
+  String get scanError => _t('Błąd skanowania', 'Scan error', 'Scan-Fehler');
+
+  // ===================== Dodaj / edytuj album =====================
+  String get addAlbumTitle => _t('Dodaj album', 'Add album', 'Album hinzufügen');
+  String get editAlbumTitle => _t('Edytuj album', 'Edit album', 'Album bearbeiten');
+  String get fieldArtist => _t('Artysta', 'Artist', 'Künstler');
+  String get fieldTitle => _t('Tytuł', 'Title', 'Titel');
+  String get fieldYear => _t('Rok', 'Year', 'Jahr');
+  String get fieldGenre => _t('Gatunek', 'Genre', 'Genre');
+  String get fieldFormat => _t('Format', 'Format', 'Format');
+  String get fieldNotes => _t('Notatki', 'Notes', 'Notizen');
+  String get fieldRequired => _t('To pole jest wymagane', 'This field is required', 'Dieses Feld ist erforderlich');
+  String get albumSaved => _t('Album zapisany', 'Album saved', 'Album gespeichert');
+  String get albumAdded => _t('Album dodany', 'Album added', 'Album hinzugefügt');
+
   String get about => _t('O aplikacji', 'About', 'Über die App');
   String get aboutDescription => _t('Aplikacja do zarządzania kolekcją muzyczną.',
       'App for managing your music collection.', 'App zur Verwaltung deiner Musiksammlung.');

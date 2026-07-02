@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../models/album.dart';
 import '../services/database_service.dart';
 import '../services/cover_service.dart';
@@ -15,15 +16,16 @@ class ScanFolderScreen extends StatefulWidget {
 
 class _ScanFolderScreenState extends State<ScanFolderScreen> {
   bool _isScanning = false;
-  String _status = 'Wybierz folder z muzyka';
+  String? _status;
   List<Map<String, dynamic>> _foundAlbums = [];
   Set<int> _selectedIndexes = {};
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Skanuj folder'),
+        title: Text(l.scanFolderTitle),
       ),
       body: Column(
         children: [
@@ -34,13 +36,13 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
                 ElevatedButton.icon(
                   onPressed: _isScanning ? null : _selectFolder,
                   icon: const Icon(Icons.folder_open),
-                  label: const Text('Wybierz folder'),
+                  label: Text(l.chooseFolder),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50),
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(_status, textAlign: TextAlign.center),
+                Text(_status ?? l.selectFolder, textAlign: TextAlign.center),
               ],
             ),
           ),
@@ -54,7 +56,7 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Znaleziono: ${_foundAlbums.length} albumow'),
+                  Text(l.foundAlbums(_foundAlbums.length)),
                   TextButton(
                     onPressed: () {
                       setState(() {
@@ -65,7 +67,7 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
                         }
                       });
                     },
-                    child: Text(_selectedIndexes.length == _foundAlbums.length ? 'Odznacz wszystko' : 'Zaznacz wszystko'),
+                    child: Text(_selectedIndexes.length == _foundAlbums.length ? l.deselectAll : l.selectAll),
                   ),
                 ],
               ),
@@ -88,8 +90,8 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
                         }
                       });
                     },
-                    title: Text(album['title'] ?? 'Nieznany album'),
-                    subtitle: Text('${album['artist'] ?? 'Nieznany'} - $trackCount utworow'),
+                    title: Text(album['title'] ?? l.unknownAlbum),
+                    subtitle: Text('${album['artist'] ?? l.unknownArtist} - ${l.tracksCount(trackCount)}'),
                     secondary: const Icon(Icons.album),
                   );
                 },
@@ -100,7 +102,7 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
               child: ElevatedButton.icon(
                 onPressed: _selectedIndexes.isEmpty ? null : _importSelected,
                 icon: const Icon(Icons.download),
-                label: Text('Importuj (${_selectedIndexes.length})'),
+                label: Text(l.importCount(_selectedIndexes.length)),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                   backgroundColor: Theme.of(context).colorScheme.primary,
@@ -114,29 +116,31 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
   }
 
   Future<void> _selectFolder() async {
+    final l = L.read(context);
     try {
       final result = await FilePicker.platform.getDirectoryPath();
-      
+
       if (result == null) return;
-      
+
       setState(() {
         _isScanning = true;
-        _status = 'Skanuje folder...';
+        _status = l.scanningFolder;
         _foundAlbums = [];
         _selectedIndexes = {};
       });
-      
+
       await _scanDirectory(result);
-      
+
     } catch (e) {
       setState(() {
         _isScanning = false;
-        _status = 'Blad: $e';
+        _status = l.errorGeneric(e);
       });
     }
   }
 
   Future<void> _scanDirectory(String path) async {
+    final l = L.read(context);
     final dir = Directory(path);
     final albums = <String, Map<String, dynamic>>{};
     
@@ -187,26 +191,27 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
         _foundAlbums = albums.values.toList();
         _selectedIndexes = Set.from(List.generate(_foundAlbums.length, (i) => i));
         if (_foundAlbums.isEmpty) {
-          _status = 'Nie znaleziono albumow w tym folderze';
+          _status = l.noAlbumsInFolder;
         } else {
-          _status = 'Znaleziono ${_foundAlbums.length} albumow';
+          _status = l.foundAlbums(_foundAlbums.length);
         }
       });
-      
+
     } catch (e) {
       setState(() {
         _isScanning = false;
-        _status = 'Blad skanowania: $e';
+        _status = '${l.scanError}: $e';
       });
     }
   }
 
   Future<void> _importSelected() async {
+    final l = L.read(context);
     final db = Provider.of<DatabaseService>(context, listen: false);
-    
+
     setState(() {
       _isScanning = true;
-      _status = 'Importuje...';
+      _status = l.importing;
     });
     
     int imported = 0;
@@ -250,26 +255,23 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
       imported++;
       
       setState(() {
-        _status = 'Importuje... $imported/$total';
+        _status = '${l.importing} $imported/$total';
       });
     }
-    
-    String finalStatus = 'Zaimportowano $imported albumow';
-    if (skipped > 0) {
-      finalStatus += ' ($skipped pominietych)';
-    }
-    
+
     setState(() {
       _isScanning = false;
-      _status = finalStatus;
+      _status = skipped > 0
+          ? l.importedNewWithSkipped(imported, skipped)
+          : l.importedNew(imported);
       _foundAlbums = [];
       _selectedIndexes = {};
     });
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Zaimportowano $imported albumow'),
+          content: Text(l.importedNew(imported)),
           backgroundColor: Colors.green,
         ),
       );
