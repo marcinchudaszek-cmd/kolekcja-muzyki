@@ -355,6 +355,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildAlbumGrid(BuildContext context, DatabaseService db) {
     return GridView.builder(
+      // Zachowuje pozycje przewijania po powrocie z ekranu albumu.
+      key: const PageStorageKey<String>('albumGrid'),
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -380,6 +382,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildAlbumList(BuildContext context, DatabaseService db) {
     return ListView.builder(
+      // Zachowuje pozycje przewijania po powrocie z ekranu albumu.
+      key: const PageStorageKey<String>('albumList'),
       padding: const EdgeInsets.all(8),
       itemCount: db.albums.length,
       itemBuilder: (context, index) {
