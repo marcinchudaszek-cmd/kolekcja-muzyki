@@ -237,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Gatunek
           _buildFilterChip(
-            label: db.genreFilter == 'all' ? l.filterAll : genreName(db.genreFilter),
+            label: db.genreFilter == 'all' ? l.filterAll : l.genreName(db.genreFilter),
             icon: Icons.music_note,
             isActive: db.genreFilter != 'all',
             onTap: () => _showGenreFilter(context, db),
@@ -627,7 +627,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 16),
           ...genres.map((g) => ListTile(
             leading: Text(g == 'all' ? '🎵' : genreEmoji(g)),
-            title: Text(g == 'all' ? L.of(context).filterAll : genreName(g)),
+            title: Text(g == 'all' ? L.of(context).filterAll : L.of(context).genreName(g)),
             trailing: db.genreFilter == g ? const Icon(Icons.check) : null,
             onTap: () {
               db.setGenreFilter(g);

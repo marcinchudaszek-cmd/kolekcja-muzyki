@@ -122,7 +122,7 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
                 'rock', 'pop', 'metal', 'jazz', 'classical', 'electronic', 
                 'hip-hop', 'blues', 'other'
               ].map((g) => ChoiceChip(
-                label: Text('${genreEmoji(g)} ${genreName(g)}'),
+                label: Text('${genreEmoji(g)} ${l.genreName(g)}'),
                 selected: _genre == g,
                 onSelected: (selected) {
                   if (selected) setState(() => _genre = g);

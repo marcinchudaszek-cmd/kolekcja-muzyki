@@ -162,7 +162,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                         _buildChip(context, Icons.calendar_today, '${currentAlbum.year}'),
                       _buildChip(context, Icons.music_note, l.tracksCount(currentAlbum.tracks.length)),
                       _buildChip(context, Icons.timer, currentAlbum.formattedDuration),
-                      _buildChip(context, null, '${genreEmoji(currentAlbum.genre)} ${genreName(currentAlbum.genre)}'),
+                      _buildChip(context, null, '${genreEmoji(currentAlbum.genre)} ${l.genreName(currentAlbum.genre)}'),
                       _buildChip(context, Icons.album, _formatLabel(l, currentAlbum.format)),
                     ],
                   ),

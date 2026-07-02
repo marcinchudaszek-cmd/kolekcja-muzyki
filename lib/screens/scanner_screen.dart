@@ -344,10 +344,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
       final details = json.decode(detailsResponse.body);
       
       // Wyciagnij artyste
-      String artist = 'Nieznany';
+      String artist = l.unknownArtist;
       final artistCredit = details['artist-credit'] as List?;
       if (artistCredit != null && artistCredit.isNotEmpty) {
-        artist = artistCredit[0]['name'] ?? artistCredit[0]['artist']?['name'] ?? 'Nieznany';
+        artist = artistCredit[0]['name'] ?? artistCredit[0]['artist']?['name'] ?? l.unknownArtist;
       }
 
       // Wyciagnij utwory

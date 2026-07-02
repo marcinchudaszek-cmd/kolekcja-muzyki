@@ -66,8 +66,7 @@ class AudioSettingsScreen extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    '• Crossfade tworzy plynne przejscie miedzy utworami\n\n'
-                    '• Equalizer systemowy pozwala dostosowac czestotliwosci dla wszystkich aplikacji',
+                    l.crossfadeInfo + l.eqInfo,
                     style: TextStyle(color: Colors.grey[400], fontSize: 13),
                   ),
                 ),
@@ -100,13 +99,7 @@ class AudioSettingsScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Equalizer'),
-        content: const Text(
-          'Aby otworzyc equalizer:\n\n'
-          '1. Otworz Ustawienia telefonu\n'
-          '2. Przejdz do: Dzwiek i wibracje\n'
-          '3. Znajdz: Jakosc dzwieku / Equalizer\n\n'
-          'Lub pobierz aplikacje Equalizer ze Sklepu Play.',
-        ),
+        content: Text(l.eqInstructions),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),

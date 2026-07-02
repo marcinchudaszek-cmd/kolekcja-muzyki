@@ -350,6 +350,27 @@ class L {
       '✅ Hinzugefügt: $title${withCover ? ' (mit Cover)' : ''}');
 
   // ===================== Statystyki =====================
+  /// Nazwa gatunku w aktualnym jezyku (zastepuje globalne genreName()).
+  String genreName(String genre) {
+    switch (genre) {
+      case 'rock': return 'Rock';
+      case 'pop': return 'Pop';
+      case 'metal': return 'Metal';
+      case 'jazz': return 'Jazz';
+      case 'classical': return _t('Klasyczna', 'Classical', 'Klassik');
+      case 'electronic': return _t('Elektroniczna', 'Electronic', 'Elektronisch');
+      case 'hip-hop': return 'Hip-Hop';
+      case 'blues': return 'Blues';
+      case 'country': return 'Country';
+      case 'reggae': return 'Reggae';
+      case 'soul': return 'Soul/R&B';
+      case 'punk': return 'Punk';
+      case 'folk': return 'Folk';
+      case 'disco': return 'Disco';
+      default: return _t('Inne', 'Other', 'Sonstige');
+    }
+  }
+
   String get genresSection => _t('Gatunki', 'Genres', 'Genres');
   String get formatsSection => _t('Formaty', 'Formats', 'Formate');
   String get topArtists => _t('Top artyści', 'Top artists', 'Top-Künstler');

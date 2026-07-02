@@ -155,7 +155,7 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
             
             if (!albums.containsKey(parentDir)) {
               final parts = parentName.split(' - ');
-              String artist = 'Nieznany';
+              String artist = l.unknownArtist;
               String title = parentName;
               
               if (parts.length >= 2) {

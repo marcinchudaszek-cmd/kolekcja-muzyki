@@ -134,7 +134,7 @@ class StatsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(genreName(entry.key)),
+                      Text(L.of(context).genreName(entry.key)),
                       const SizedBox(height: 4),
                       LinearProgressIndicator(
                         value: entry.value / total,
