@@ -132,13 +132,17 @@ class AudioPlayerHandler extends BaseAudioHandler {
   // ----- Metadane / okladki -----
 
   Uri? _albumArtUri(Album album) {
+    // Preferuj URL sieciowy — Android Auto dziala w osobnym procesie i nie
+    // odczyta lokalnego file://. Sciezka lokalna zostaje jako fallback (dziala
+    // w powiadomieniu / na ekranie blokady tego samego procesu).
+    final url = album.coverUrl;
+    if (url != null && url.isNotEmpty) {
+      final uri = Uri.tryParse(url);
+      if (uri != null) return uri;
+    }
     final path = album.coverPath;
     if (path != null && path.isNotEmpty && File(path).existsSync()) {
       return Uri.file(path);
-    }
-    final url = album.coverUrl;
-    if (url != null && url.isNotEmpty) {
-      return Uri.tryParse(url);
     }
     return null;
   }
@@ -376,7 +380,14 @@ class AudioPlayerHandler extends BaseAudioHandler {
       final box = Hive.box<Album>('albums');
       final albums = box.values
           .where((a) => !a.isWishlist && a.tracks.any((t) => t.hasFile))
-          .toList();
+          .toList()
+        ..sort((a, b) {
+          final byArtist =
+              a.artist.toLowerCase().compareTo(b.artist.toLowerCase());
+          return byArtist != 0
+              ? byArtist
+              : a.title.toLowerCase().compareTo(b.title.toLowerCase());
+        });
       return [
         for (final a in albums)
           MediaItem(

@@ -35,6 +35,14 @@ void main() async {
       androidNotificationChannelName: 'Odtwarzanie',
       androidNotificationOngoing: true,
       androidStopForegroundOnPause: true,
+      // Android Auto: albumy jako siatka okladek, utwory jako lista.
+      androidBrowsableRootExtras: {
+        audio_service.AndroidContentStyle.supportedKey: true,
+        audio_service.AndroidContentStyle.browsableHintKey:
+            audio_service.AndroidContentStyle.gridItemHintValue,
+        audio_service.AndroidContentStyle.playableHintKey:
+            audio_service.AndroidContentStyle.listItemHintValue,
+      },
     ),
   );
 
