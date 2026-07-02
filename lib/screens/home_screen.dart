@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../models/album.dart';
 import '../services/database_service.dart';
 import '../services/audio_service.dart';
@@ -97,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     controller: _searchController,
                     autofocus: true,
                     decoration: InputDecoration(
-                      hintText: 'Szukaj albumów...',
+                      hintText: L.of(context).searchAlbums,
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.close),
@@ -120,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ] else ...[
                 Expanded(
-                  child: Text('🎵 Moja Kolekcja',
+                  child: Text(L.of(context).myCollection,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -132,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 IconButton(
                   icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
                   onPressed: () => setState(() => _isGridView = !_isGridView),
-                  tooltip: _isGridView ? 'Widok listy' : 'Widok kafelków',
+                  tooltip: _isGridView ? L.of(context).viewList : L.of(context).viewGrid,
                 ),
                 IconButton(
                   icon: const Icon(Icons.search),
@@ -149,9 +150,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: const Icon(Icons.more_vert),
                   itemBuilder: (ctx) => [
                     PopupMenuItem(
-                      child: const ListTile(
-                        leading: Icon(Icons.bar_chart),
-                        title: Text('Statystyki'),
+                      child: ListTile(
+                        leading: const Icon(Icons.bar_chart),
+                        title: Text(L.of(context).statistics),
                         contentPadding: EdgeInsets.zero,
                       ),
                       onTap: () {
@@ -161,9 +162,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                     PopupMenuItem(
-                      child: const ListTile(
-                        leading: Icon(Icons.settings),
-                        title: Text('Ustawienia'),
+                      child: ListTile(
+                        leading: const Icon(Icons.settings),
+                        title: Text(L.of(context).settings),
                         contentPadding: EdgeInsets.zero,
                       ),
                       onTap: () {
@@ -184,11 +185,11 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.only(top: 8),
               child: Row(
                 children: [
-                  _buildCounter(db.totalAlbums.toString(), 'albumów'),
+                  _buildCounter(db.totalAlbums.toString(), L.of(context).labelAlbums),
                   const SizedBox(width: 16),
-                  _buildCounter(db.totalTracks.toString(), 'utworów'),
+                  _buildCounter(db.totalTracks.toString(), L.of(context).labelTracks),
                   const SizedBox(width: 16),
-                  _buildCounter(db.favoriteCount.toString(), 'ulubionych'),
+                  _buildCounter(db.favoriteCount.toString(), L.of(context).labelFavorites),
                 ],
               ),
             ),
@@ -220,6 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFilters(BuildContext context, DatabaseService db) {
+    final l = L.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -227,43 +229,43 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           // Sortowanie
           _buildFilterChip(
-            label: _getSortLabel(db.sortBy),
+            label: _getSortLabel(l, db.sortBy),
             icon: db.sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
             onTap: () => _showSortOptions(context, db),
           ),
           const SizedBox(width: 8),
-          
+
           // Gatunek
           _buildFilterChip(
-            label: db.genreFilter == 'all' ? 'Wszystkie' : genreName(db.genreFilter),
+            label: db.genreFilter == 'all' ? l.filterAll : genreName(db.genreFilter),
             icon: Icons.music_note,
             isActive: db.genreFilter != 'all',
             onTap: () => _showGenreFilter(context, db),
           ),
           const SizedBox(width: 8),
-          
+
           // Format
           _buildFilterChip(
-            label: db.formatFilter == 'all' ? 'Format' : _getFormatLabel(db.formatFilter),
+            label: db.formatFilter == 'all' ? l.format : _getFormatLabel(l, db.formatFilter),
             icon: Icons.album,
             isActive: db.formatFilter != 'all',
             onTap: () => _showFormatFilter(context, db),
           ),
-          
+
           // Lista zyczen
           const SizedBox(width: 8),
           _buildFilterChip(
-            label: 'Lista zyczen',
+            label: l.wishlist,
             icon: Icons.card_giftcard,
             isActive: db.showOnlyWishlist,
             onTap: () => db.setShowOnlyWishlist(!db.showOnlyWishlist),
           ),
-          
+
           // Wyczyść filtry
           if (db.genreFilter != 'all' || db.formatFilter != 'all' || db.showOnlyFavorites || db.showOnlyWishlist) ...[
             const SizedBox(width: 8),
             _buildFilterChip(
-              label: 'Wyczyść',
+              label: l.clearShort,
               icon: Icons.clear,
               onTap: () => db.clearFilters(),
             ),
@@ -307,6 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final l = L.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -318,15 +321,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Twoja kolekcja jest pusta',
+            l.emptyCollection,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           Text(
             // Skanowanie pamięci urządzenia działa tylko w aplikacji mobilnej
-            kIsWeb
-                ? 'Dodaj albumy do swojej kolekcji'
-                : 'Dodaj albumy lub zeskanuj muzykę z telefonu',
+            kIsWeb ? l.addAlbumsToCollection : l.addOrScan,
             style: TextStyle(color: Colors.grey[400]),
           ),
           const SizedBox(height: 24),
@@ -337,7 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(builder: (_) => const AddAlbumScreen()),
               ),
               icon: const Icon(Icons.add),
-              label: const Text('Dodaj album'),
+              label: Text(l.addAlbum),
             )
           else
             ElevatedButton.icon(
@@ -346,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(builder: (_) => const ScanMusicScreen()),
               ),
               icon: const Icon(Icons.folder_open),
-              label: const Text('Skanuj muzykę z telefonu'),
+              label: Text(l.scanFromPhone),
             ),
         ],
       ),
@@ -436,7 +437,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 8),
                     ],
                     Text(
-                      '${album.tracks.length} utworów',
+                      L.of(context).tracksCount(album.tracks.length),
                       style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                     ),
                     if (album.isFavorite) ...[
@@ -486,7 +487,7 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Dodaj album',
+              L.of(context).addAlbum,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 24),
@@ -494,8 +495,8 @@ class _HomeScreenState extends State<HomeScreen> {
             if (!kIsWeb)
               _buildAddOption(
                 icon: Icons.folder_open,
-                title: 'Skanuj muzykę z telefonu',
-                subtitle: 'Znajdź albumy w pamięci urządzenia',
+                title: L.of(context).scanFromPhone,
+                subtitle: L.of(context).scanFromPhoneSub,
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
@@ -506,8 +507,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             _buildAddOption(
               icon: Icons.qr_code_scanner,
-              title: 'Skanuj kod kreskowy',
-              subtitle: 'Zeskanuj kod z płyty CD lub winyla',
+              title: L.of(context).scanBarcode,
+              subtitle: L.of(context).scanBarcodeSub,
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -518,8 +519,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             _buildAddOption(
               icon: Icons.edit,
-              title: 'Dodaj ręcznie',
-              subtitle: 'Wpisz dane albumu',
+              title: L.of(context).addManually,
+              subtitle: L.of(context).addManuallySub,
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -567,19 +568,19 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Sortuj wedlug', style: Theme.of(context).textTheme.titleLarge),
+            Text(L.of(context).sortBy, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
-            _buildSortOption(db, 'artist', 'Artysta'),
-            _buildSortOption(db, 'title', 'Tytul'),
-            _buildSortOption(db, 'year', 'Rok'),
-            _buildSortOption(db, 'rating', 'Ocena'),
-            _buildSortOption(db, 'recent', 'Ostatnio dodane'),
+            _buildSortOption(db, 'artist', L.of(context).sortArtist),
+            _buildSortOption(db, 'title', L.of(context).sortTitle),
+            _buildSortOption(db, 'year', L.of(context).sortYear),
+            _buildSortOption(db, 'rating', L.of(context).sortRating),
+            _buildSortOption(db, 'recent', L.of(context).sortRecent),
             const Divider(),
             ListTile(
               leading: Icon(
                 db.sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
               ),
-              title: Text(db.sortAscending ? 'Rosnaco' : 'Malejaco'),
+              title: Text(db.sortAscending ? L.of(context).ascending : L.of(context).descending),
               onTap: () {
                 db.toggleSortOrder();
                 Navigator.pop(context);
@@ -622,11 +623,11 @@ class _HomeScreenState extends State<HomeScreen> {
         shrinkWrap: true,
         padding: const EdgeInsets.all(24),
         children: [
-          Text('Gatunek', style: Theme.of(context).textTheme.titleLarge),
+          Text(L.of(context).genre, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 16),
           ...genres.map((g) => ListTile(
             leading: Text(g == 'all' ? '🎵' : genreEmoji(g)),
-            title: Text(g == 'all' ? 'Wszystkie' : genreName(g)),
+            title: Text(g == 'all' ? L.of(context).filterAll : genreName(g)),
             trailing: db.genreFilter == g ? const Icon(Icons.check) : null,
             onTap: () {
               db.setGenreFilter(g);
@@ -639,14 +640,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showFormatFilter(BuildContext context, DatabaseService db) {
+    final l = L.of(context);
     final formats = [
-      ('all', 'Wszystkie', Icons.album),
+      ('all', l.filterAll, Icons.album),
       ('cd', 'CD', Icons.album),
-      ('vinyl', 'Winyl', Icons.album),
-      ('digital', 'Cyfrowy', Icons.cloud),
-      ('cassette', 'Kaseta', Icons.radio),
+      ('vinyl', l.formatVinyl, Icons.album),
+      ('digital', l.formatDigital, Icons.cloud),
+      ('cassette', l.formatCassette, Icons.radio),
     ];
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -657,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen> {
         shrinkWrap: true,
         padding: const EdgeInsets.all(24),
         children: [
-          Text('Format', style: Theme.of(context).textTheme.titleLarge),
+          Text(l.format, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 16),
           ...formats.map((f) => ListTile(
             leading: Icon(f.$3),
@@ -673,23 +675,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  String _getSortLabel(String sortBy) {
+  String _getSortLabel(L l, String sortBy) {
     switch (sortBy) {
-      case 'artist': return 'Artysta';
-      case 'title': return 'Tytul';
-      case 'year': return 'Rok';
-      case 'rating': return 'Ocena';
-      case 'recent': return 'Ostatnie';
-      default: return 'Sortuj';
+      case 'artist': return l.sortArtist;
+      case 'title': return l.sortTitle;
+      case 'year': return l.sortYear;
+      case 'rating': return l.sortRating;
+      case 'recent': return l.sortRecentShort;
+      default: return l.sort;
     }
   }
 
-  String _getFormatLabel(String format) {
+  String _getFormatLabel(L l, String format) {
     switch (format) {
       case 'cd': return 'CD';
-      case 'vinyl': return 'Winyl';
-      case 'digital': return 'Cyfrowy';
-      case 'cassette': return 'Kaseta';
+      case 'vinyl': return l.formatVinyl;
+      case 'digital': return l.formatDigital;
+      case 'cassette': return l.formatCassette;
       default: return format;
     }
   }

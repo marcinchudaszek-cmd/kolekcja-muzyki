@@ -136,6 +136,54 @@ class L {
   String importError(Object e) => _t('Błąd importu: $e', 'Import error: $e', 'Importfehler: $e');
   String importedAlbums(int count) => _t('Zaimportowano $count albumów',
       'Imported $count albums', '$count Alben importiert');
+  // ===================== Ekran glowny =====================
+  String get myCollection => _t('🎵 Moja Kolekcja', '🎵 My Collection', '🎵 Meine Sammlung');
+  String get searchAlbums =>
+      _t('Szukaj albumów...', 'Search albums...', 'Alben suchen...');
+  String get viewList => _t('Widok listy', 'List view', 'Listenansicht');
+  String get viewGrid => _t('Widok kafelków', 'Grid view', 'Kachelansicht');
+  String get statistics => _t('Statystyki', 'Statistics', 'Statistiken');
+  String get labelAlbums => _t('albumów', 'albums', 'Alben');
+  String get labelTracks => _t('utworów', 'tracks', 'Titel');
+  String get labelFavorites => _t('ulubionych', 'favorites', 'Favoriten');
+  String get filterAll => _t('Wszystkie', 'All', 'Alle');
+  String get wishlist => _t('Lista życzeń', 'Wishlist', 'Wunschliste');
+  String get clearShort => _t('Wyczyść', 'Clear', 'Löschen');
+  String get emptyCollection =>
+      _t('Twoja kolekcja jest pusta', 'Your collection is empty', 'Deine Sammlung ist leer');
+  String get addAlbumsToCollection => _t('Dodaj albumy do swojej kolekcji',
+      'Add albums to your collection', 'Füge Alben zu deiner Sammlung hinzu');
+  String get addOrScan => _t('Dodaj albumy lub zeskanuj muzykę z telefonu',
+      'Add albums or scan music from your phone', 'Alben hinzufügen oder Musik vom Telefon scannen');
+  String get addAlbum => _t('Dodaj album', 'Add album', 'Album hinzufügen');
+  String get scanFromPhone => _t('Skanuj muzykę z telefonu',
+      'Scan music from phone', 'Musik vom Telefon scannen');
+  String get scanFromPhoneSub => _t('Znajdź albumy w pamięci urządzenia',
+      'Find albums in device storage', 'Alben im Gerätespeicher finden');
+  String get scanBarcode =>
+      _t('Skanuj kod kreskowy', 'Scan barcode', 'Barcode scannen');
+  String get scanBarcodeSub => _t('Zeskanuj kod z płyty CD lub winyla',
+      'Scan a CD or vinyl barcode', 'CD- oder Vinyl-Barcode scannen');
+  String get addManually => _t('Dodaj ręcznie', 'Add manually', 'Manuell hinzufügen');
+  String get addManuallySub =>
+      _t('Wpisz dane albumu', 'Enter album details', 'Albumdaten eingeben');
+  String tracksCount(int n) => _t('$n utworów', '$n tracks', '$n Titel');
+  String get sort => _t('Sortuj', 'Sort', 'Sortieren');
+  String get sortBy => _t('Sortuj według', 'Sort by', 'Sortieren nach');
+  String get sortArtist => _t('Artysta', 'Artist', 'Künstler');
+  String get sortTitle => _t('Tytuł', 'Title', 'Titel');
+  String get sortYear => _t('Rok', 'Year', 'Jahr');
+  String get sortRating => _t('Ocena', 'Rating', 'Bewertung');
+  String get sortRecent => _t('Ostatnio dodane', 'Recently added', 'Zuletzt hinzugefügt');
+  String get sortRecentShort => _t('Ostatnie', 'Recent', 'Neueste');
+  String get ascending => _t('Rosnąco', 'Ascending', 'Aufsteigend');
+  String get descending => _t('Malejąco', 'Descending', 'Absteigend');
+  String get genre => _t('Gatunek', 'Genre', 'Genre');
+  String get format => _t('Format', 'Format', 'Format');
+  String get formatVinyl => _t('Winyl', 'Vinyl', 'Vinyl');
+  String get formatDigital => _t('Cyfrowy', 'Digital', 'Digital');
+  String get formatCassette => _t('Kaseta', 'Cassette', 'Kassette');
+
   String get about => _t('O aplikacji', 'About', 'Über die App');
   String get aboutDescription => _t('Aplikacja do zarządzania kolekcją muzyczną.',
       'App for managing your music collection.', 'App zur Verwaltung deiner Musiksammlung.');
