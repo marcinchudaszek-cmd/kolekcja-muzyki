@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../models/album.dart';
 import '../services/database_service.dart';
 
@@ -46,13 +47,14 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edytuj album'),
+        title: Text(l.editAlbumTitle),
         actions: [
           TextButton(
             onPressed: _saveAlbum,
-            child: const Text('Zapisz'),
+            child: Text(l.save),
           ),
         ],
       ),
@@ -64,14 +66,14 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
             // Artysta
             TextFormField(
               controller: _artistController,
-              decoration: const InputDecoration(
-                labelText: 'Artysta *',
-                prefixIcon: Icon(Icons.person),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: '${l.fieldArtist} *',
+                prefixIcon: const Icon(Icons.person),
+                border: const OutlineInputBorder(),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Podaj artyste';
+                  return l.enterArtist;
                 }
                 return null;
               },
@@ -81,14 +83,14 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
             // Tytul
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Tytul albumu *',
-                prefixIcon: Icon(Icons.album),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: '${l.albumTitleLabel} *',
+                prefixIcon: const Icon(Icons.album),
+                border: const OutlineInputBorder(),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Podaj tytul';
+                  return l.enterTitle;
                 }
                 return null;
               },
@@ -98,10 +100,10 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
             // Rok
             TextFormField(
               controller: _yearController,
-              decoration: const InputDecoration(
-                labelText: 'Rok wydania',
-                prefixIcon: Icon(Icons.calendar_today),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l.releaseYear,
+                prefixIcon: const Icon(Icons.calendar_today),
+                border: const OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
             ),
@@ -109,7 +111,7 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
 
             // Gatunek
             Text(
-              'Gatunek',
+              l.fieldGenre,
               style: TextStyle(color: Colors.grey[400], fontSize: 12),
             ),
             const SizedBox(height: 8),
@@ -131,7 +133,7 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
 
             // Format
             Text(
-              'Format',
+              l.fieldFormat,
               style: TextStyle(color: Colors.grey[400], fontSize: 12),
             ),
             const SizedBox(height: 8),
@@ -139,9 +141,9 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
               spacing: 8,
               children: [
                 ('cd', 'CD'),
-                ('vinyl', 'Winyl'),
-                ('digital', 'Cyfrowy'),
-                ('cassette', 'Kaseta'),
+                ('vinyl', l.formatVinyl),
+                ('digital', l.formatDigital),
+                ('cassette', l.formatCassette),
               ].map((f) => ChoiceChip(
                 label: Text(f.$2),
                 selected: _format == f.$1,
@@ -154,7 +156,7 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
 
             // Ocena
             Text(
-              'Ocena',
+              l.rating,
               style: TextStyle(color: Colors.grey[400], fontSize: 12),
             ),
             const SizedBox(height: 8),
@@ -174,10 +176,10 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
             // Notatki
             TextFormField(
               controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Notatki',
-                prefixIcon: Icon(Icons.notes),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l.notes,
+                prefixIcon: const Icon(Icons.notes),
+                border: const OutlineInputBorder(),
               ),
               maxLines: 3,
             ),
@@ -189,7 +191,7 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
               child: ElevatedButton.icon(
                 onPressed: _saveAlbum,
                 icon: const Icon(Icons.save),
-                label: const Text('Zapisz zmiany'),
+                label: Text(l.saveChanges),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.all(16),
                 ),
@@ -203,6 +205,7 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
 
   void _saveAlbum() {
     if (!_formKey.currentState!.validate()) return;
+    final l = L.read(context);
 
     final db = Provider.of<DatabaseService>(context, listen: false);
     
@@ -217,8 +220,8 @@ class _EditAlbumScreenState extends State<EditAlbumScreen> {
     db.updateAlbum(widget.album);
     
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('OK Album zaktualizowany!'),
+      SnackBar(
+        content: Text('✅ ${l.albumUpdated}'),
         backgroundColor: Colors.green,
       ),
     );

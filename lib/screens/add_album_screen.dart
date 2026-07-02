@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../models/album.dart';
 import '../services/database_service.dart';
 import '../services/cover_service.dart';
@@ -33,13 +34,14 @@ class _AddAlbumScreenState extends State<AddAlbumScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = L.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dodaj album'),
+        title: Text(l.addAlbumTitle),
         actions: [
           TextButton(
             onPressed: _saveAlbum,
-            child: const Text('Zapisz'),
+            child: Text(l.save),
           ),
         ],
       ),
@@ -51,14 +53,14 @@ class _AddAlbumScreenState extends State<AddAlbumScreen> {
             // Artysta
             TextFormField(
               controller: _artistController,
-              decoration: const InputDecoration(
-                labelText: 'Artysta *',
-                prefixIcon: Icon(Icons.person),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: '${l.fieldArtist} *',
+                prefixIcon: const Icon(Icons.person),
+                border: const OutlineInputBorder(),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Podaj artyste';
+                  return l.enterArtist;
                 }
                 return null;
               },
@@ -68,14 +70,14 @@ class _AddAlbumScreenState extends State<AddAlbumScreen> {
             // Tytul
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Tytul albumu *',
-                prefixIcon: Icon(Icons.album),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: '${l.albumTitleLabel} *',
+                prefixIcon: const Icon(Icons.album),
+                border: const OutlineInputBorder(),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Podaj tytul';
+                  return l.enterTitle;
                 }
                 return null;
               },
@@ -85,10 +87,10 @@ class _AddAlbumScreenState extends State<AddAlbumScreen> {
             // Rok
             TextFormField(
               controller: _yearController,
-              decoration: const InputDecoration(
-                labelText: 'Rok wydania',
-                prefixIcon: Icon(Icons.calendar_today),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l.releaseYear,
+                prefixIcon: const Icon(Icons.calendar_today),
+                border: const OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
             ),
@@ -96,7 +98,7 @@ class _AddAlbumScreenState extends State<AddAlbumScreen> {
 
             // Gatunek
             Text(
-              'Gatunek',
+              l.fieldGenre,
               style: TextStyle(color: Colors.grey[400], fontSize: 12),
             ),
             const SizedBox(height: 8),
@@ -118,17 +120,17 @@ class _AddAlbumScreenState extends State<AddAlbumScreen> {
 
             // Format
             Text(
-              'Format',
+              l.fieldFormat,
               style: TextStyle(color: Colors.grey[400], fontSize: 12),
             ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               children: [
-                ('cd', 'ðŸ’¿ CD'),
-                ('vinyl', 'ðŸ“€ Winyl'),
-                ('digital', 'â˜ï¸ Cyfrowy'),
-                ('cassette', 'ðŸ“¼ Kaseta'),
+                ('cd', '💿 CD'),
+                ('vinyl', '📀 ${l.formatVinyl}'),
+                ('digital', '☁️ ${l.formatDigital}'),
+                ('cassette', '📼 ${l.formatCassette}'),
               ].map((f) => ChoiceChip(
                 label: Text(f.$2),
                 selected: _format == f.$1,
@@ -141,7 +143,7 @@ class _AddAlbumScreenState extends State<AddAlbumScreen> {
 
             // Ocena
             Text(
-              'Ocena',
+              l.rating,
               style: TextStyle(color: Colors.grey[400], fontSize: 12),
             ),
             const SizedBox(height: 8),
@@ -161,10 +163,10 @@ class _AddAlbumScreenState extends State<AddAlbumScreen> {
             // Notatki
             TextFormField(
               controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Notatki',
-                prefixIcon: Icon(Icons.notes),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l.notes,
+                prefixIcon: const Icon(Icons.notes),
+                border: const OutlineInputBorder(),
               ),
               maxLines: 3,
             ),
@@ -176,7 +178,7 @@ class _AddAlbumScreenState extends State<AddAlbumScreen> {
               child: ElevatedButton.icon(
                 onPressed: _saveAlbum,
                 icon: const Icon(Icons.save),
-                label: const Text('Zapisz album'),
+                label: Text(l.saveAlbum),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.all(16),
                 ),
@@ -190,6 +192,7 @@ class _AddAlbumScreenState extends State<AddAlbumScreen> {
 
   void _saveAlbum() async {
     if (!_formKey.currentState!.validate()) return;
+    final l = L.read(context);
 
     final db = Provider.of<DatabaseService>(context, listen: false);
     final artist = _artistController.text.trim();
@@ -198,8 +201,8 @@ class _AddAlbumScreenState extends State<AddAlbumScreen> {
     // Sprawdz duplikaty
     if (db.isDuplicate(artist, title)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('âš ï¸ Ten album juz istnieje w kolekcji!'),
+        SnackBar(
+          content: Text(l.albumExists),
           backgroundColor: Colors.orange,
         ),
       );
@@ -210,16 +213,16 @@ class _AddAlbumScreenState extends State<AddAlbumScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => const Center(
+      builder: (ctx) => Center(
         child: Card(
           child: Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Pobieram okladke...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(l.downloadingCover),
               ],
             ),
           ),
@@ -255,15 +258,15 @@ class _AddAlbumScreenState extends State<AddAlbumScreen> {
     if (added) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('OK Album dodany!${coverUrl != null ? ' (z okladka)' : ''}'),
+          content: Text(l.albumAddedMsg(coverUrl != null)),
           backgroundColor: Colors.green,
         ),
       );
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('âš ï¸ Ten album juz istnieje!'),
+        SnackBar(
+          content: Text(l.albumExists),
           backgroundColor: Colors.orange,
         ),
       );

@@ -301,6 +301,24 @@ class L {
   String get fieldRequired => _t('To pole jest wymagane', 'This field is required', 'Dieses Feld ist erforderlich');
   String get albumSaved => _t('Album zapisany', 'Album saved', 'Album gespeichert');
   String get albumAdded => _t('Album dodany', 'Album added', 'Album hinzugefügt');
+  String get albumTitleLabel => _t('Tytuł albumu', 'Album title', 'Albumtitel');
+  String get releaseYear => _t('Rok wydania', 'Release year', 'Erscheinungsjahr');
+  String get rating => _t('Ocena', 'Rating', 'Bewertung');
+  String get notes => _t('Notatki', 'Notes', 'Notizen');
+  String get saveAlbum => _t('Zapisz album', 'Save album', 'Album speichern');
+  String get enterArtist => _t('Podaj artystę', 'Enter artist', 'Künstler eingeben');
+  String get enterTitle => _t('Podaj tytuł', 'Enter title', 'Titel eingeben');
+  String get albumExists =>
+      _t('⚠️ Ten album już istnieje w kolekcji!', '⚠️ This album already exists in the collection!',
+          '⚠️ Dieses Album ist bereits in der Sammlung!');
+  String get downloadingCover =>
+      _t('Pobieram okładkę...', 'Downloading cover...', 'Cover wird geladen...');
+  String albumAddedMsg(bool withCover) => _t(
+      '✅ Album dodany!${withCover ? ' (z okładką)' : ''}',
+      '✅ Album added!${withCover ? ' (with cover)' : ''}',
+      '✅ Album hinzugefügt!${withCover ? ' (mit Cover)' : ''}');
+  String get albumUpdated => _t('Album zaktualizowany', 'Album updated', 'Album aktualisiert');
+  String get saveChanges => _t('Zapisz zmiany', 'Save changes', 'Änderungen speichern');
 
   String get about => _t('O aplikacji', 'About', 'Über die App');
   String get aboutDescription => _t('Aplikacja do zarządzania kolekcją muzyczną.',
