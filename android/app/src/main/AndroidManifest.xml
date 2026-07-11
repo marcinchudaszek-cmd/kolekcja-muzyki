@@ -9,10 +9,6 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     
-    <!-- Mikrofon (rozpoznawanie muzyki) -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-feature android:name="android.hardware.microphone" android:required="false" />
-    
     <!-- Equalizer -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     
@@ -27,8 +23,7 @@
     <application
         android:label="Kolekcja Muzyki"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:icon="@mipmap/ic_launcher">
         
         <activity
             android:name=".MainActivity"
