@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
@@ -203,7 +204,12 @@ class AudioPlayerHandler extends BaseAudioHandler {
 
     try {
       await _player.setAudioSource(await _audioSourceFor(track));
-      await _player.play();
+      // UWAGA: na Androidzie Future z play() konczy sie dopiero przy koncu
+      // utworu (STATE_ENDED), nie przy starcie odtwarzania. Awaitowanie go
+      // wstrzymywalo kod wywolujacy (nawigacje, historie) do konca utworu,
+      // a przerwanie przez "nastepny" odpalalo te zalegle kontynuacje
+      // w losowych momentach (np. zdejmowalo ekran odtwarzacza).
+      unawaited(_player.play());
       onTrackPlayed?.call(album.id, track.title, track.durationSeconds ?? 0);
     } catch (e) {
       debugPrint('Blad odtwarzania: $e');
@@ -231,7 +237,8 @@ class AudioPlayerHandler extends BaseAudioHandler {
     if (_player.playing) {
       await _player.pause();
     } else {
-      await _player.play();
+      // play() konczy sie dopiero na koncu utworu - nie czekaj (patrz playTrack).
+      unawaited(_player.play());
       if (_currentAlbum != null && _currentTrack != null) {
         onTrackPlayed?.call(
           _currentAlbum!.id,
@@ -329,12 +336,26 @@ class AudioPlayerHandler extends BaseAudioHandler {
     onChanged?.call();
   }
 
-  void _onTrackComplete() {
+  bool _autoAdvancing = false;
+
+  Future<void> _onTrackComplete() async {
     if (_loopMode == LoopMode.one) {
       // Powtorzenie obsluguje sam AudioPlayer.
       return;
     }
-    nextTrack();
+    // Guard: stream stanu moze wyemitowac "completed" wielokrotnie zanim
+    // nowe zrodlo sie zaladuje - nie odpalaj auto-next rownolegle.
+    if (_autoAdvancing) return;
+    _autoAdvancing = true;
+    try {
+      await nextTrack();
+    } catch (e) {
+      // Bez catcha jeden blad (rethrow z playTrack) zabijalby auto-next
+      // na zawsze - wyjatek w listenerze streamu jest nieobslugiwany.
+      debugPrint('Blad auto-next: $e');
+    } finally {
+      _autoAdvancing = false;
+    }
   }
 
   void setCrossfade(bool enabled) {

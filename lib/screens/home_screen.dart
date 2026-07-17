@@ -25,6 +25,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
+  // Trwale kontrolery przewijania: keepScrollOffset przywraca pozycje listy
+  // nawet gdy scrollable zostanie przebudowany (PageStorageKey nie wystarczal).
+  final ScrollController _gridScrollController = ScrollController();
+  final ScrollController _listScrollController = ScrollController();
   bool _isSearching = false;
   bool _isGridView = true; // true = kafelki, false = lista
 @override
@@ -33,13 +37,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final audio = Provider.of<AudioService>(context, listen: false);
     final history = Provider.of<HistoryService>(context, listen: false);
     audio.onTrackPlayed = (albumId, trackTitle, duration) {
-      print('HISTORIA: Dodaje $trackTitle');
       history.addRecord(albumId, trackTitle, duration);
     };
   }
   @override
   void dispose() {
     _searchController.dispose();
+    _gridScrollController.dispose();
+    _listScrollController.dispose();
     super.dispose();
   }
 
@@ -357,7 +362,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildAlbumGrid(BuildContext context, DatabaseService db) {
     return GridView.builder(
       // Zachowuje pozycje przewijania po powrocie z ekranu albumu.
-      key: const PageStorageKey<String>('albumGrid'),
+      controller: _gridScrollController,
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -384,7 +389,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildAlbumList(BuildContext context, DatabaseService db) {
     return ListView.builder(
       // Zachowuje pozycje przewijania po powrocie z ekranu albumu.
-      key: const PageStorageKey<String>('albumList'),
+      controller: _listScrollController,
       padding: const EdgeInsets.all(8),
       itemCount: db.albums.length,
       itemBuilder: (context, index) {
