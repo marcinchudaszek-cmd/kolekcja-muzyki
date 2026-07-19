@@ -340,10 +340,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ElevatedButton.icon(
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const AddAlbumScreen()),
+                MaterialPageRoute(builder: (_) => const ScanFolderScreen()),
               ),
-              icon: const Icon(Icons.add),
-              label: Text(l.addAlbum),
+              icon: const Icon(Icons.upload_file),
+              label: Text(l.pickFromDisk),
             )
           else
             ElevatedButton.icon(
@@ -496,8 +496,22 @@ class _HomeScreenState extends State<HomeScreen> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 24),
-            // Skanowanie pamięci urządzenia niedostępne w przeglądarce
-            if (!kIsWeb)
+            // Skanowanie pamięci urządzenia niedostępne w przeglądarce —
+            // tam zamiast tego jest wybór plików z dysku.
+            if (kIsWeb)
+              _buildAddOption(
+                icon: Icons.upload_file,
+                title: L.of(context).pickFromDisk,
+                subtitle: L.of(context).pickFromDiskSub,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ScanFolderScreen()),
+                  );
+                },
+              )
+            else
               _buildAddOption(
                 icon: Icons.folder_open,
                 title: L.of(context).scanFromPhone,

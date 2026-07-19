@@ -29,6 +29,8 @@ class AudioService extends ChangeNotifier {
   /// odtwarzanie po surowej sciezce konczy sie bledem EACCES.
   Future<String?> _resolvePathToUri(String path) async {
     if (path.startsWith('content://')) return path;
+    // Na web nie ma MediaStore, a Platform.* z dart:io rzuca wyjatek.
+    if (kIsWeb) return null;
     if (!Platform.isAndroid) return null;
 
     // 1. Natywny ContentResolver — niezawodny, niezalezny od on_audio_query.
@@ -85,6 +87,8 @@ class AudioService extends ChangeNotifier {
   // ----- Uprawnienia i skanowanie (bez zmian) -----
 
   Future<bool> checkPermissions() async {
+    // Na web nie ma uprawnien plikowych, a Platform.* z dart:io rzuca wyjatek.
+    if (kIsWeb) return true;
     if (Platform.isAndroid) {
       final status = await Permission.audio.request();
       if (status.isGranted) return true;

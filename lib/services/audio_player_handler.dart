@@ -168,7 +168,11 @@ class AudioPlayerHandler extends BaseAudioHandler {
   /// jest tylko fallbackiem dla plikow w prywatnej pamieci aplikacji.
   Future<AudioSource> _audioSourceFor(Track track) async {
     final path = track.filePath!;
-    if (path.startsWith('content://')) {
+    // content:// (Android MediaStore), blob: (import z dysku na web) i http(s)
+    // sa juz gotowymi URI - nie mapuj ich.
+    if (path.startsWith('content://') ||
+        path.startsWith('blob:') ||
+        path.startsWith('http')) {
       return AudioSource.uri(Uri.parse(path));
     }
     // Mapuj surowa sciezke na content:// URI (wymagane na Androidzie 10+).

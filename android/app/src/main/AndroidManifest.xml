@@ -72,8 +72,10 @@
             android:resource="@xml/automotive_app_desc" />
     </application>
     
-    <!-- Queries dla url_launcher -->
+    <!-- Queries dla url_launcher + wykrywanie zainstalowanych aplikacji -->
     <queries>
+        <package android:name="com.shazam.android" />
+        <package android:name="com.melodis.midomiMusicIdentifier.freemium" />
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />

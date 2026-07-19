@@ -423,11 +423,27 @@ class L {
   String get playStore => _t('Sklep Play', 'Play Store', 'Play Store');
 
   // ===================== Rozpoznawanie utworu =====================
+  // ===================== Import z dysku (web) =====================
+  String get pickFromDisk =>
+      _t('Wybierz pliki z dysku', 'Pick files from disk', 'Dateien von der Festplatte wählen');
+  String get pickFromDiskSub =>
+      _t('Dodaj utwory z komputera', 'Add tracks from your computer', 'Titel vom Computer hinzufügen');
+  String get importFromDisk => _t('Import z dysku', 'Disk import', 'Import von Festplatte');
+  String get variousArtists =>
+      _t('Różni artyści', 'Various artists', 'Verschiedene Künstler');
+  String get webSessionNote => _t(
+      'Pliki będzie można odtwarzać do zamknięcia karty przeglądarki',
+      'Files remain playable until you close the browser tab',
+      'Dateien bleiben bis zum Schließen des Browser-Tabs abspielbar');
+
   String get recognizeWith =>
       _t('Rozpoznaj utwór za pomocą:', 'Recognize a song with:', 'Song erkennen mit:');
   String get getFromPlayStore =>
       _t('Pobierz ze Sklepu Play', 'Get from Play Store', 'Aus dem Play Store laden');
   String getApp(String name) => _t('Pobierz $name', 'Get $name', '$name laden');
+  String openApp(String name) => _t('Otwórz $name', 'Open $name', '$name öffnen');
+  String get appInstalled =>
+      _t('Aplikacja zainstalowana', 'App installed', 'App installiert');
   String get searchLyricsGoogle =>
       _t('Szukaj tekstu w Google', 'Search lyrics on Google', 'Songtext bei Google suchen');
   String get recognizeHint => _t(

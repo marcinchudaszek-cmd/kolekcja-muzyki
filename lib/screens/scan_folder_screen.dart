@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,8 @@ import '../l10n/app_localizations.dart';
 import '../models/album.dart';
 import '../services/database_service.dart';
 import '../services/cover_service.dart';
+import '../services/web_blob_stub.dart'
+    if (dart.library.html) '../services/web_blob_html.dart';
 
 class ScanFolderScreen extends StatefulWidget {
   const ScanFolderScreen({super.key});
@@ -34,15 +37,28 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
             child: Column(
               children: [
                 ElevatedButton.icon(
-                  onPressed: _isScanning ? null : _selectFolder,
-                  icon: const Icon(Icons.folder_open),
-                  label: Text(l.chooseFolder),
+                  onPressed: _isScanning
+                      ? null
+                      : (kIsWeb ? _selectFilesWeb : _selectFolder),
+                  icon: Icon(kIsWeb ? Icons.upload_file : Icons.folder_open),
+                  label: Text(kIsWeb ? l.pickFromDisk : l.chooseFolder),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50),
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(_status ?? l.selectFolder, textAlign: TextAlign.center),
+                Text(
+                  _status ?? (kIsWeb ? l.pickFromDiskSub : l.selectFolder),
+                  textAlign: TextAlign.center,
+                ),
+                if (kIsWeb) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    l.webSessionNote,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  ),
+                ],
               ],
             ),
           ),
@@ -134,6 +150,56 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
     } catch (e) {
       setState(() {
         _isScanning = false;
+        _status = l.errorGeneric(e);
+      });
+    }
+  }
+
+  /// Web: nie ma dostepu do folderow ani sciezek — user wybiera pliki,
+  /// a odtwarzanie dziala przez blob URL (do zamkniecia karty).
+  Future<void> _selectFilesWeb() async {
+    final l = L.read(context);
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: ['mp3', 'flac', 'm4a', 'wav', 'ogg'],
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) return;
+
+      final tracks = <Map<String, String>>[];
+      final artists = <String>{};
+      for (final f in result.files) {
+        final bytes = f.bytes;
+        if (bytes == null) continue;
+        final url = createBlobUrl(bytes, 'audio/mpeg');
+        final name = f.name.replaceAll(
+            RegExp(r'\.(mp3|flac|m4a|wav|ogg)$', caseSensitive: false), '');
+        final parts = name.split(' - ');
+        if (parts.length >= 2) artists.add(parts[0].trim());
+        tracks.add({'title': name, 'path': url});
+      }
+      if (tracks.isEmpty) return;
+
+      tracks.sort((a, b) => a['title']!.compareTo(b['title']!));
+      final artist =
+          artists.length == 1 ? artists.first : l.variousArtists;
+
+      setState(() {
+        _foundAlbums = [
+          {
+            'artist': artist,
+            'title': l.importFromDisk,
+            'path': '',
+            'tracks': tracks,
+          }
+        ];
+        _selectedIndexes = {0};
+        _status = l.foundAlbums(1);
+      });
+    } catch (e) {
+      setState(() {
         _status = l.errorGeneric(e);
       });
     }
