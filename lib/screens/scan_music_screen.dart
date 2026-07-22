@@ -2,6 +2,7 @@
 import 'package:provider/provider.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import '../l10n/app_localizations.dart';
+import '../models/album.dart';
 import '../services/audio_service.dart';
 import '../services/database_service.dart';
 
@@ -87,13 +88,17 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
     final audio = Provider.of<AudioService>(context, listen: false);
     final db = Provider.of<DatabaseService>(context, listen: false);
     
-    int imported = 0;
-    int skipped = 0;
+    int addedTracks = 0;
+    int newAlbums = 0;
+    int skippedTracks = 0;
     final selectedAlbums = _foundAlbums.where((a) => _selectedAlbums.contains(a.id)).toList();
+
+    // Zbior sciezek juz w kolekcji — budowany raz na caly import.
+    final existingPaths = db.allTrackPaths;
 
     for (int i = 0; i < selectedAlbums.length; i++) {
       final albumModel = selectedAlbums[i];
-      
+
       setState(() {
         _scannedCount = i + 1;
         _status = l.importingProgress(i + 1, selectedAlbums.length, albumModel.album);
@@ -102,49 +107,53 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
       try {
         // Konwertuj AlbumModel do naszego Album z pelnymi sciezkami do plikow
         final album = await audio.albumModelToAlbum(albumModel);
-        
-        // Uzyj funkcji isDuplicate z DatabaseService
-        if (!db.isDuplicate(album.artist, album.title)) {
-          final added = await db.addAlbum(album);
-          if (added) {
-            imported++;
-          } else {
-            skipped++;
+
+        // Odsiej utwory, ktorych pliki juz sa w kolekcji (gdziekolwiek).
+        final fresh = <Track>[];
+        for (final t in album.tracks) {
+          final key = t.filePath?.toLowerCase().replaceAll('\\', '/').trim();
+          if (key == null || key.isEmpty) continue;
+          if (existingPaths.contains(key)) {
+            skippedTracks++;
+            continue;
           }
+          existingPaths.add(key);
+          fresh.add(t);
+        }
+        if (fresh.isEmpty) continue;
+
+        final existingAlbum = db.findAlbumByName(album.artist, album.title);
+        if (existingAlbum != null) {
+          // Album juz jest — dopisz tylko nowe utwory.
+          addedTracks += await db.addTracksToAlbum(existingAlbum, fresh);
         } else {
-          skipped++;
+          album.tracks = fresh;
+          await db.addAlbum(album);
+          newAlbums++;
+          addedTracks += fresh.length;
         }
       } catch (e) {
         debugPrint('Blad importu albumu: $e');
       }
     }
 
+    final summary = addedTracks > 0
+        ? l.importSummary(addedTracks, newAlbums, skippedTracks)
+        : l.nothingNew;
+
     setState(() {
       _isScanning = false;
-      if (skipped > 0) {
-        _status = l.importedNewWithSkipped(imported, skipped);
-      } else {
-        _status = l.importedNew(imported);
-      }
+      _status = summary;
     });
 
     if (mounted) {
-      if (imported > 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l.importedOk(imported, skipped)),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
-      } else if (skipped > 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l.allExist(skipped)),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(summary),
+          backgroundColor: addedTracks > 0 ? Colors.green : Colors.orange,
+        ),
+      );
+      if (addedTracks > 0) Navigator.pop(context);
     }
   }
 

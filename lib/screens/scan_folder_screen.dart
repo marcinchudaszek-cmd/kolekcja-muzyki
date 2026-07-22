@@ -280,56 +280,78 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
       _status = l.importing;
     });
     
-    int imported = 0;
-    int skipped = 0;
+    int addedTracks = 0;
+    int newAlbums = 0;
+    int skippedTracks = 0;
+    int done = 0;
     final total = _selectedIndexes.length;
-    
+
+    // Zbior sciezek juz w kolekcji — jeden raz, nie per plik.
+    final existingPaths = db.allTrackPaths;
+
     for (var index in _selectedIndexes) {
       final albumData = _foundAlbums[index];
       final artist = albumData['artist'] as String;
       final title = albumData['title'] as String;
-      
-      if (db.isDuplicate(artist, title)) {
-        skipped++;
-        continue;
+
+      // Odsiej pliki, ktore juz sa w kolekcji (gdziekolwiek).
+      final tracks = <Track>[];
+      for (final t in (albumData['tracks'] as List)) {
+        final path = t['path'] as String;
+        final key = path.toLowerCase().replaceAll('\\', '/').trim();
+        if (existingPaths.contains(key)) {
+          skippedTracks++;
+          continue;
+        }
+        existingPaths.add(key);
+        tracks.add(Track(
+          title: t['title'] as String,
+          filePath: path,
+          durationSeconds: 0,
+          trackNumber: 0,
+        ));
       }
-      
-      final tracks = (albumData['tracks'] as List).map((t) => Track(
-        title: t['title'] as String,
-        filePath: t['path'] as String,
-        durationSeconds: 0,
-        trackNumber: 0,
-      )).toList();
-      
-      String? coverUrl;
-      try {
-        coverUrl = await CoverService.fetchCover(artist, title);
-      } catch (_) {}
-      
-      final album = Album(
-        id: 'folder_${DateTime.now().millisecondsSinceEpoch}_$index',
-        artist: artist,
-        title: title,
-        genre: 'other',
-        format: 'digital',
-        rating: 3,
-        tracks: tracks,
-        coverUrl: coverUrl,
-      );
-      
-      await db.addAlbum(album);
-      imported++;
-      
+
+      if (tracks.isNotEmpty) {
+        final existingAlbum = db.findAlbumByName(artist, title);
+        if (existingAlbum != null) {
+          // Album juz jest — dopisz tylko nowe utwory.
+          addedTracks += await db.addTracksToAlbum(existingAlbum, tracks);
+        } else {
+          String? coverUrl;
+          try {
+            coverUrl = await CoverService.fetchCover(artist, title);
+          } catch (_) {}
+
+          final album = Album(
+            id: 'folder_${DateTime.now().millisecondsSinceEpoch}_$index',
+            artist: artist,
+            title: title,
+            genre: 'other',
+            format: 'digital',
+            rating: 3,
+            tracks: tracks,
+            coverUrl: coverUrl,
+          );
+          await db.addAlbum(album);
+          newAlbums++;
+          addedTracks += tracks.length;
+        }
+      }
+
+      done++;
       setState(() {
-        _status = '${l.importing} $imported/$total';
+        _status = '${l.importing} $done/$total';
       });
     }
 
+    final summary = addedTracks > 0
+        ? l.importSummary(addedTracks, newAlbums, skippedTracks)
+        : l.nothingNew;
+
     setState(() {
       _isScanning = false;
-      _status = skipped > 0
-          ? l.importedNewWithSkipped(imported, skipped)
-          : l.importedNew(imported);
+      _status = summary;
       _foundAlbums = [];
       _selectedIndexes = {};
     });
@@ -337,8 +359,8 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(l.importedNew(imported)),
-          backgroundColor: Colors.green,
+          content: Text(summary),
+          backgroundColor: addedTracks > 0 ? Colors.green : Colors.orange,
         ),
       );
     }

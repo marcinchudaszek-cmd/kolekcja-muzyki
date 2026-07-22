@@ -289,6 +289,46 @@ class L {
       '⚠️ Alle ausgewählten Alben ($skipped) sind bereits in der Sammlung');
   String get scanError => _t('Błąd skanowania', 'Scan error', 'Scan-Fehler');
 
+  /// Podsumowanie importu z deduplikacja po plikach.
+  String importSummary(int tracks, int albums, int skipped) {
+    final pl = StringBuffer('Dodano $tracks utworów');
+    final en = StringBuffer('Added $tracks tracks');
+    final de = StringBuffer('$tracks Titel hinzugefügt');
+    if (albums > 0) {
+      pl.write(' w $albums nowych albumach');
+      en.write(' in $albums new albums');
+      de.write(' in $albums neuen Alben');
+    }
+    if (skipped > 0) {
+      pl.write(', pominięto $skipped już istniejących');
+      en.write(', skipped $skipped already in collection');
+      de.write(', $skipped bereits vorhandene übersprungen');
+    }
+    return _t(pl.toString(), en.toString(), de.toString());
+  }
+
+  String get nothingNew => _t('Brak nowych utworów – wszystko już jest w kolekcji',
+      'Nothing new – everything is already in your collection',
+      'Nichts Neues – alles ist bereits in deiner Sammlung');
+
+  // ===================== Usuwanie duplikatow =====================
+  String get removeDuplicates =>
+      _t('Usuń duplikaty', 'Remove duplicates', 'Duplikate entfernen');
+  String get removeDuplicatesSub => _t('Scal powtórzone albumy i utwory',
+      'Merge repeated albums and tracks', 'Doppelte Alben und Titel zusammenführen');
+  String get removeDuplicatesConfirm => _t(
+      'Aplikacja scali albumy o tej samej nazwie i usunie powtórzone utwory (ten sam plik). Pliki na dysku nie zostaną ruszone.',
+      'Albums with the same name will be merged and repeated tracks (same file) removed. Files on disk are not touched.',
+      'Alben mit gleichem Namen werden zusammengeführt und doppelte Titel (gleiche Datei) entfernt. Dateien auf dem Speicher bleiben unberührt.');
+  String get searchingDuplicates =>
+      _t('Szukam duplikatów...', 'Searching duplicates...', 'Suche Duplikate...');
+  String duplicatesRemoved(int albums, int tracks) => _t(
+      'Usunięto $albums zdublowanych albumów i $tracks utworów',
+      'Removed $albums duplicate albums and $tracks tracks',
+      '$albums doppelte Alben und $tracks Titel entfernt');
+  String get noDuplicates =>
+      _t('Nie znaleziono duplikatów', 'No duplicates found', 'Keine Duplikate gefunden');
+
   // ===================== Dodaj / edytuj album =====================
   String get addAlbumTitle => _t('Dodaj album', 'Add album', 'Album hinzufügen');
   String get editAlbumTitle => _t('Edytuj album', 'Edit album', 'Album bearbeiten');

@@ -116,6 +116,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () => _importData(context),
           ),
           ListTile(
+            leading: const Icon(Icons.cleaning_services),
+            title: Text(l.removeDuplicates),
+            subtitle: Text(l.removeDuplicatesSub),
+            onTap: () => _removeDuplicates(context),
+          ),
+          ListTile(
             leading: const Icon(Icons.delete_forever, color: Colors.red),
             title: Text(l.clearCollection, style: const TextStyle(color: Colors.red)),
             subtitle: Text(l.clearCollectionSubtitle),
@@ -264,6 +270,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     }
+  }
+
+  Future<void> _removeDuplicates(BuildContext context) async {
+    final l = L.read(context);
+    final db = Provider.of<DatabaseService>(context, listen: false);
+    final messenger = ScaffoldMessenger.of(context);
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.removeDuplicates),
+        content: Text(l.removeDuplicatesConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.ok),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => Center(
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(l.searchingDuplicates),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final result = await db.removeDuplicates();
+
+    if (!mounted) return;
+    Navigator.of(context, rootNavigator: true).pop(); // zamknij ladowanie
+
+    final removedAny = result.albums > 0 || result.tracks > 0;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(removedAny
+            ? l.duplicatesRemoved(result.albums, result.tracks)
+            : l.noDuplicates),
+        backgroundColor: removedAny ? Colors.green : Colors.orange,
+      ),
+    );
   }
 
   Future<void> _clearData(BuildContext context) async {

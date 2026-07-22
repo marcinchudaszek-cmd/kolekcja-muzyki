@@ -135,6 +135,119 @@ class DatabaseService extends ChangeNotifier {
     return true;
   }
 
+  // ---------- Deduplikacja po sciezkach plikow ----------
+
+  /// Zbior wszystkich sciezek plikow w kolekcji (znormalizowanych).
+  /// Budowany raz na import — pozwala odsiac tysiace plikow bez skanowania
+  /// calej kolekcji dla kazdego utworu z osobna.
+  Set<String> get allTrackPaths {
+    final paths = <String>{};
+    for (final album in _albums) {
+      for (final t in album.tracks) {
+        final p = _normalizePath(t.filePath);
+        if (p != null) paths.add(p);
+      }
+    }
+    return paths;
+  }
+
+  static String? _normalizePath(String? path) {
+    if (path == null || path.isEmpty) return null;
+    return path.toLowerCase().replaceAll('\\', '/').trim();
+  }
+
+  /// Znajdz istniejacy album po artyscie i tytule (bez wielkosci liter).
+  Album? findAlbumByName(String artist, String title) {
+    final a = artist.toLowerCase().trim();
+    final t = title.toLowerCase().trim();
+    for (final album in _albums) {
+      if (album.artist.toLowerCase().trim() == a &&
+          album.title.toLowerCase().trim() == t) {
+        return album;
+      }
+    }
+    return null;
+  }
+
+  /// Dopisz utwory do istniejacego albumu (pomijajac te, ktore juz w nim sa).
+  /// Zwraca liczbe faktycznie dodanych utworow.
+  Future<int> addTracksToAlbum(Album album, List<Track> newTracks) async {
+    final existing = album.tracks
+        .map((t) => _normalizePath(t.filePath))
+        .whereType<String>()
+        .toSet();
+
+    final toAdd = <Track>[];
+    for (final t in newTracks) {
+      final p = _normalizePath(t.filePath);
+      if (p == null || existing.contains(p)) continue;
+      existing.add(p);
+      toAdd.add(t);
+    }
+    if (toAdd.isEmpty) return 0;
+
+    album.tracks = [...album.tracks, ...toAdd];
+    await _albumsBox.put(album.id, album);
+    _loadAlbums();
+    return toAdd.length;
+  }
+
+  /// Usuwa duplikaty w istniejacej kolekcji:
+  /// 1) scala albumy o tym samym artyscie i tytule,
+  /// 2) usuwa powtorzone utwory (ta sama sciezka pliku) w obrebie albumu,
+  /// 3) usuwa utwory, ktore wystepuja juz w innym albumie.
+  /// Zwraca (usuniete albumy, usuniete utwory).
+  Future<({int albums, int tracks})> removeDuplicates() async {
+    int removedAlbums = 0;
+    int removedTracks = 0;
+
+    // 1) Scal albumy o tej samej nazwie (artysta + tytul).
+    final byName = <String, Album>{};
+    final toDelete = <String>[];
+    for (final album in List<Album>.from(_albums)) {
+      final key =
+          '${album.artist.toLowerCase().trim()}|${album.title.toLowerCase().trim()}';
+      final keeper = byName[key];
+      if (keeper == null) {
+        byName[key] = album;
+      } else {
+        keeper.tracks = [...keeper.tracks, ...album.tracks];
+        toDelete.add(album.id);
+        removedAlbums++;
+      }
+    }
+
+    // 2+3) Odsiej powtorzone sciezki — globalnie, w kolejnosci albumow.
+    final seenPaths = <String>{};
+    for (final album in byName.values) {
+      final unique = <Track>[];
+      for (final t in album.tracks) {
+        final p = _normalizePath(t.filePath);
+        if (p == null) {
+          unique.add(t); // utwor bez pliku (np. katalog CD) — zostaw
+          continue;
+        }
+        if (seenPaths.contains(p)) {
+          removedTracks++;
+          continue;
+        }
+        seenPaths.add(p);
+        unique.add(t);
+      }
+      if (unique.length != album.tracks.length) {
+        album.tracks = unique;
+      }
+      await _albumsBox.put(album.id, album);
+    }
+
+    for (final id in toDelete) {
+      await _albumsBox.delete(id);
+    }
+
+    _loadAlbums();
+    return (albums: removedAlbums, tracks: removedTracks);
+  }
+
   // Dodaj wiele albumow (zwraca liczbe dodanych)
   Future<int> addAlbums(List<Album> albums) async {
     int added = 0;
