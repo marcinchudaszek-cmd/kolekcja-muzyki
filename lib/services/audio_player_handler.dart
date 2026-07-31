@@ -52,6 +52,14 @@ class AudioPlayerHandler extends BaseAudioHandler {
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
 
+  // Android Auto: w trakcie zmiany utworu odtwarzacz przechodzi przez stan
+  // idle, ktory AA interpretuje jako "koniec odtwarzania" i zamyka ekran
+  // now-playing. Ten flag pozwala zamiast idle raportowac loading.
+  bool _switchingTrack = false;
+  // Id albumu, dla ktorego opublikowano kolejke - unikamy ponownej publikacji
+  // przy zmianie utworu w tym samym albumie (AA rebuildowaloby widok).
+  String? _queueAlbumId;
+
   // Gettery
   AudioPlayer get player => _player;
   AndroidEqualizer get equalizer => _equalizer;
@@ -101,8 +109,19 @@ class AudioPlayerHandler extends BaseAudioHandler {
     });
   }
 
-  void _broadcastState(PlaybackEvent event) {
+  void _broadcastState([PlaybackEvent? event]) {
     final playing = _player.playing;
+    final raw = _player.processingState;
+    // W trakcie przelaczania utworu nie raportuj idle (AA zamkneloby ekran).
+    final processingState = (_switchingTrack && raw == ProcessingState.idle)
+        ? AudioProcessingState.loading
+        : const {
+            ProcessingState.idle: AudioProcessingState.idle,
+            ProcessingState.loading: AudioProcessingState.loading,
+            ProcessingState.buffering: AudioProcessingState.buffering,
+            ProcessingState.ready: AudioProcessingState.ready,
+            ProcessingState.completed: AudioProcessingState.completed,
+          }[raw]!;
     playbackState.add(playbackState.value.copyWith(
       controls: [
         MediaControl.skipToPrevious,
@@ -115,13 +134,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
         MediaAction.seekBackward,
       },
       androidCompactActionIndices: const [0, 1, 2],
-      processingState: const {
-        ProcessingState.idle: AudioProcessingState.idle,
-        ProcessingState.loading: AudioProcessingState.loading,
-        ProcessingState.buffering: AudioProcessingState.buffering,
-        ProcessingState.ready: AudioProcessingState.ready,
-        ProcessingState.completed: AudioProcessingState.completed,
-      }[_player.processingState]!,
+      processingState: processingState,
       playing: playing,
       updatePosition: _player.position,
       bufferedPosition: _player.bufferedPosition,
@@ -148,16 +161,17 @@ class AudioPlayerHandler extends BaseAudioHandler {
     return null;
   }
 
-  MediaItem _trackToMediaItem(Album album, int index) {
+  MediaItem _trackToMediaItem(Album album, int index, {Duration? duration}) {
     final t = album.tracks[index];
     return MediaItem(
       id: 'track/${album.id}/$index',
       title: t.title,
       album: album.title,
       artist: album.artist,
-      duration: t.durationSeconds != null
-          ? Duration(seconds: t.durationSeconds!)
-          : null,
+      duration: duration ??
+          (t.durationSeconds != null && t.durationSeconds! > 0
+              ? Duration(seconds: t.durationSeconds!)
+              : null),
       artUri: _albumArtUri(album),
       playable: true,
     );
@@ -198,16 +212,29 @@ class AudioPlayerHandler extends BaseAudioHandler {
     _currentTrackIndex = trackIndex;
     _currentTrack = track;
     _isLoading = true;
+    _switchingTrack = true;
     onChanged?.call();
 
-    // Opublikuj kolejke i aktualny utwor dla sesji medialnej / Android Auto.
-    queue.add([
-      for (int i = 0; i < album.tracks.length; i++) _trackToMediaItem(album, i),
-    ]);
+    // Kolejke publikuj tylko przy zmianie albumu (nie przy kazdym utworze —
+    // AA rebuildowaloby wtedy caly widok now-playing).
+    if (_queueAlbumId != album.id) {
+      queue.add([
+        for (int i = 0; i < album.tracks.length; i++)
+          _trackToMediaItem(album, i),
+      ]);
+      _queueAlbumId = album.id;
+    }
     mediaItem.add(_trackToMediaItem(album, trackIndex));
 
     try {
-      await _player.setAudioSource(await _audioSourceFor(track));
+      final loaded = await _player.setAudioSource(await _audioSourceFor(track));
+      _switchingTrack = false;
+      // Ustaw realny czas trwania (skan folderu daje 0s) — dzieki temu
+      // Android Auto pokazuje poprawny pasek postepu.
+      if (loaded != null) {
+        mediaItem.add(_trackToMediaItem(album, trackIndex, duration: loaded));
+      }
+      _broadcastState();
       // UWAGA: na Androidzie Future z play() konczy sie dopiero przy koncu
       // utworu (STATE_ENDED), nie przy starcie odtwarzania. Awaitowanie go
       // wstrzymywalo kod wywolujacy (nawigacje, historie) do konca utworu,
@@ -218,6 +245,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
     } catch (e) {
       debugPrint('Blad odtwarzania: $e');
       _isLoading = false;
+      _switchingTrack = false;
       onChanged?.call();
       rethrow;
     }
@@ -312,6 +340,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
     _currentAlbum = null;
     _currentTrack = null;
     _currentTrackIndex = 0;
+    _queueAlbumId = null;
     _position = Duration.zero;
     _duration = Duration.zero;
     mediaItem.add(null);
