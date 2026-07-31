@@ -43,6 +43,11 @@ android {
         release {
             signingConfig = signingConfigs.getByName("release")
         }
+        debug {
+            // Wersja testowa instaluje sie OBOK apki z Play (osobny pakiet),
+            // wiec nie kasuje danych i omija konflikt podpisow.
+            applicationIdSuffix = ".debug"
+        }
     }
 }
 flutter {
