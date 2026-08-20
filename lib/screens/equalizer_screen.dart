@@ -51,7 +51,7 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
           Switch(
             value: _enabled,
             onChanged: (v) {
-              audio.equalizer.setEnabled(v);
+              audio.setEqualizerEnabled(v);
               setState(() => _enabled = v);
             },
             activeColor: Colors.green,
@@ -69,9 +69,11 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: _bands.map((band) {
-                        return _buildBandSlider(audio, band);
-                      }).toList(),
+                      children: _bands
+                          .asMap()
+                          .entries
+                          .map((e) => _buildBandSlider(audio, e.key, e.value))
+                          .toList(),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -91,7 +93,8 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
     );
   }
 
-  Widget _buildBandSlider(AudioService audio, AndroidEqualizerBand band) {
+  Widget _buildBandSlider(
+      AudioService audio, int index, AndroidEqualizerBand band) {
     final minDb = _params?.minDecibels ?? -15.0;
     final maxDb = _params?.maxDecibels ?? 15.0;
     
@@ -118,7 +121,9 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
                 max: maxDb,
                 onChanged: _enabled
                     ? (v) {
-                        band.setGain(v);
+                        // Przez fasade — ustawia pasmo na obu odtwarzaczach,
+                        // zeby crossfade nie zmienial brzmienia.
+                        audio.setEqualizerBandGain(index, v);
                         setState(() {});
                       }
                     : null,
@@ -139,7 +144,7 @@ class _EqualizerScreenState extends State<EqualizerScreen> {
       onPressed: _enabled && _bands.length >= gains.length
           ? () {
               for (int i = 0; i < gains.length && i < _bands.length; i++) {
-                _bands[i].setGain(gains[i]);
+                audio.setEqualizerBandGain(i, gains[i]);
               }
               setState(() {});
             }

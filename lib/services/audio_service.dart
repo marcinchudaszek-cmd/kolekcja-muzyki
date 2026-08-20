@@ -190,6 +190,12 @@ class AudioService extends ChangeNotifier {
 
   Future<void> stop() => _handler.stopPlayback();
 
+  /// Equalizer — stosowane do OBU odtwarzaczy (crossfade uzywa dwoch).
+  Future<void> setEqualizerEnabled(bool enabled) =>
+      _handler.setEqualizerEnabled(enabled);
+  Future<void> setEqualizerBandGain(int index, double gain) =>
+      _handler.setEqualizerBandGain(index, gain);
+
   void toggleShuffle() => _handler.toggleShuffle();
 
   void toggleLoopMode() => _handler.toggleLoopMode();
