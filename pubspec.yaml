@@ -3,7 +3,7 @@ description: Zarządzaj swoją kolekcją muzyki - pełny odtwarzacz z dostępem 
 
 publish_to: 'none'
 
-version: 1.6.1+31
+version: 1.6.2+32
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -51,7 +51,6 @@ dependencies:
   provider: ^6.1.1
   shared_preferences: ^2.2.2
   intl: ^0.20.2
-  equalizer_flutter: ^0.0.1
 
 dev_dependencies:
   flutter_test:

@@ -511,7 +511,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               )
-            else
+            else ...[
               _buildAddOption(
                 icon: Icons.folder_open,
                 title: L.of(context).scanFromPhone,
@@ -524,6 +524,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
+              _buildAddOption(
+                icon: Icons.search,
+                title: L.of(context).findByName,
+                subtitle: L.of(context).findByNameSub,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ScanMusicScreen(searchMode: true),
+                    ),
+                  );
+                },
+              ),
+            ],
             _buildAddOption(
               icon: Icons.qr_code_scanner,
               title: L.of(context).scanBarcode,

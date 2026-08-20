@@ -1,4 +1,5 @@
 ﻿import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class LyricsService {
@@ -58,7 +59,7 @@ class LyricsService {
         if (result != null && result.isNotEmpty) return result;
       }
     } catch (e) {
-      print('Synced lyrics error: $e');
+      debugPrint('Synced lyrics error: $e');
     }
     return null;
   }
@@ -90,7 +91,7 @@ class LyricsService {
         }
       }
     } catch (e) {
-      print('LRCLIB synced error: $e');
+      debugPrint('LRCLIB synced error: $e');
     }
     return null;
   }
@@ -110,7 +111,7 @@ class LyricsService {
         }
       }
     } catch (e) {
-      print('Lyrics.ovh error: $e');
+      debugPrint('Lyrics.ovh error: $e');
     }
     return null;
   }
@@ -133,7 +134,7 @@ class LyricsService {
         }
       }
     } catch (e) {
-      print('LRCLIB error: $e');
+      debugPrint('LRCLIB error: $e');
     }
     return null;
   }

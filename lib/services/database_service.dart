@@ -307,9 +307,14 @@ class DatabaseService extends ChangeNotifier {
     _loadAlbums();
   }
 
-  // Pobierz album po ID
+  // Pobierz album po ID (null gdy nie ma — sygnatura obiecuje Album?,
+  // wczesniej rzucalo wyjatkiem, przez co sprawdzenia `if (album != null)`
+  // w metodach ponizej byly martwe i kazdy brakujacy album wysadzal akcje).
   Album? getAlbum(String id) {
-    return _albums.firstWhere((a) => a.id == id, orElse: () => throw Exception('Album not found'));
+    for (final a in _albums) {
+      if (a.id == id) return a;
+    }
+    return null;
   }
 
   // Toggle ulubione

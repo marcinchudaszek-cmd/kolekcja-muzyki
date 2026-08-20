@@ -7,7 +7,12 @@ import '../services/audio_service.dart';
 import '../services/database_service.dart';
 
 class ScanMusicScreen extends StatefulWidget {
-  const ScanMusicScreen({super.key});
+  /// Gdy true, ekran startuje w trybie wyszukiwania: albumy nie sa
+  /// automatycznie zaznaczane, a lista jest filtrowana po wpisanej nazwie —
+  /// pozwala dodac jeden album bez przewijania calej biblioteki.
+  const ScanMusicScreen({super.key, this.searchMode = false});
+
+  final bool searchMode;
 
   @override
   State<ScanMusicScreen> createState() => _ScanMusicScreenState();
@@ -21,6 +26,22 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
   Set<int> _selectedAlbums = {};
   int _scannedCount = 0;
   int _totalCount = 0;
+  String _searchQuery = '';
+
+  /// Albumy widoczne na liscie po uwzglednieniu wyszukiwarki.
+  List<AlbumModel> get _visibleAlbums {
+    final q = _searchQuery.trim().toLowerCase();
+    if (q.isEmpty) {
+      // W trybie wyszukiwania nie renderuj calej biblioteki dopoki nic nie
+      // wpisano — to wlasnie oszczedza czas przy tysiacach albumow.
+      return widget.searchMode ? const [] : _foundAlbums;
+    }
+    return _foundAlbums.where((a) {
+      final title = a.album.toLowerCase();
+      final artist = (a.artist ?? '').toLowerCase();
+      return title.contains(q) || artist.contains(q);
+    }).toList();
+  }
 
   @override
   void initState() {
@@ -58,7 +79,10 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
       setState(() {
         _totalCount = albums.length;
         _foundAlbums = albums;
-        _selectedAlbums = Set.from(albums.map((a) => a.id));
+        // W trybie wyszukiwania zaczynamy bez zaznaczen — uzytkownik wybiera
+        // pojedyncze albumy. W zwyklym skanie domyslnie zaznacz wszystkie.
+        _selectedAlbums =
+            widget.searchMode ? {} : Set.from(albums.map((a) => a.id));
         _isScanning = false;
         _status = l.foundAlbums(albums.length);
       });
@@ -162,7 +186,7 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
     final l = L.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(l.scanMusicTitle),
+        title: Text(widget.searchMode ? l.findByName : l.scanMusicTitle),
         actions: [
           if (_foundAlbums.isNotEmpty && !_isScanning)
             TextButton.icon(
@@ -267,11 +291,40 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
     }
 
     // Lista albumow
+    final visible = _visibleAlbums;
+    final visibleIds = visible.map((a) => a.id).toSet();
+    final allVisibleSelected =
+        visible.isNotEmpty && visibleIds.every(_selectedAlbums.contains);
     return Column(
       children: [
+        // Pole wyszukiwania
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: TextField(
+            autofocus: widget.searchMode,
+            decoration: InputDecoration(
+              hintText: l.searchAlbumsHint,
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => setState(() => _searchQuery = ''),
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surface,
+              isDense: true,
+            ),
+            onChanged: (value) => setState(() => _searchQuery = value),
+          ),
+        ),
+
         // Status i przyciski
-        Container(
-          padding: const EdgeInsets.all(16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
               Expanded(
@@ -280,34 +333,44 @@ class _ScanMusicScreenState extends State<ScanMusicScreen> {
                   style: TextStyle(color: Colors.grey[400]),
                 ),
               ),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    if (_selectedAlbums.length == _foundAlbums.length) {
-                      _selectedAlbums.clear();
-                    } else {
-                      _selectedAlbums = Set.from(_foundAlbums.map((a) => a.id));
-                    }
-                  });
-                },
-                child: Text(
-                  _selectedAlbums.length == _foundAlbums.length
-                      ? l.deselectAll
-                      : l.selectAll,
+              if (visible.isNotEmpty)
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      if (allVisibleSelected) {
+                        _selectedAlbums.removeAll(visibleIds);
+                      } else {
+                        _selectedAlbums.addAll(visibleIds);
+                      }
+                    });
+                  },
+                  child: Text(allVisibleSelected ? l.deselectAll : l.selectAll),
                 ),
-              ),
             ],
           ),
         ),
-        
-        // Lista
+
+        // Lista (lub podpowiedz, gdy brak wynikow)
         Expanded(
-          child: ListView.builder(
-            itemCount: _foundAlbums.length,
+          child: visible.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Text(
+                      _searchQuery.trim().isEmpty
+                          ? l.typeToSearch
+                          : l.searchNoResults(_searchQuery.trim()),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey[400], fontSize: 16),
+                    ),
+                  ),
+                )
+              : ListView.builder(
+            itemCount: visible.length,
             itemBuilder: (context, index) {
-              final album = _foundAlbums[index];
+              final album = visible[index];
               final isSelected = _selectedAlbums.contains(album.id);
-              
+
               return ListTile(
                 leading: QueryArtworkWidget(
                   id: album.id,

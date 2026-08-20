@@ -440,7 +440,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     try {
       coverUrl = await CoverService.fetchCover(artist, title);
     } catch (e) {
-      print('Blad pobierania okladki: $e');
+      debugPrint('Blad pobierania okladki: $e');
     }
 
     if (!mounted) return;

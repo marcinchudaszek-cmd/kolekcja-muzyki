@@ -158,7 +158,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _downloadAllCovers(BuildContext context) async {
     final l = L.read(context);
     final db = Provider.of<DatabaseService>(context, listen: false);
-    final albumsWithoutCovers = db.albums.where((a) =>
+    // allAlbums, nie albums — `albums` zwraca liste PRZEFILTROWANA (gatunek,
+    // format, ulubione, wyszukiwanie), wiec przy aktywnym filtrze pobieralo
+    // okladki tylko dla widocznego wycinka kolekcji.
+    final albumsWithoutCovers = db.allAlbums.where((a) =>
       (a.coverUrl == null || a.coverUrl!.isEmpty) &&
       (a.coverPath == null || a.coverPath!.isEmpty)
     ).toList();
@@ -188,14 +191,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _downloadTotal = albumsWithoutCovers.length;
     });
 
+    int found = 0;
     for (var album in albumsWithoutCovers) {
+      if (!mounted) return; // ekran zamkniety w trakcie — przerwij
       try {
         final coverUrl = await CoverService.fetchCover(album.artist, album.title);
         if (coverUrl != null && coverUrl.isNotEmpty) {
-          db.updateCover(album.id, coverUrl);
+          // await — bez tego zapis leci "w tle", a ewentualny blad nie jest
+          // lapany przez ten try/catch.
+          await db.updateCover(album.id, coverUrl);
+          found++;
         }
       } catch (e) {
-        // Ignoruj bledy
+        debugPrint('Blad pobierania okladki dla ${album.artist} - ${album.title}: $e');
       }
       setState(() {
         _downloadProgress++;
@@ -208,7 +216,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.coversDownloaded(_downloadProgress))),
+        SnackBar(
+          // Raportuj ile FAKTYCZNIE znaleziono — wczesniej pokazywano licznik
+          // przetworzonych albumow, wiec komunikat mowil "pobrano N okladek"
+          // nawet gdy nie znaleziono ani jednej.
+          content: Text(l.coversResult(found, albumsWithoutCovers.length)),
+          backgroundColor: found > 0 ? Colors.green : Colors.orange,
+        ),
       );
     }
   }

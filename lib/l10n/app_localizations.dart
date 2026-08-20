@@ -100,6 +100,17 @@ class L {
       'Pobieranie... $done/$total', 'Downloading... $done/$total', 'Laden... $done/$total');
   String coversDownloaded(int count) => _t('Pobrano okładki dla $count albumów',
       'Downloaded covers for $count albums', 'Cover für $count Alben geladen');
+  /// Uczciwy wynik: ile faktycznie znaleziono z ilu sprawdzonych.
+  String coversResult(int found, int checked) => _t(
+      found == 0
+          ? 'Nie znaleziono okładek (sprawdzono $checked albumów)'
+          : 'Pobrano $found okładek z $checked sprawdzonych albumów',
+      found == 0
+          ? 'No covers found (checked $checked albums)'
+          : 'Downloaded $found covers out of $checked albums checked',
+      found == 0
+          ? 'Keine Cover gefunden ($checked Alben geprüft)'
+          : '$found Cover von $checked geprüften Alben geladen');
   String get coversTitle => _t('Okładki', 'Covers', 'Cover');
   String get allHaveCovers => _t('Wszystkie albumy mają już okładki!',
       'All albums already have covers!', 'Alle Alben haben bereits Cover!');
@@ -160,6 +171,17 @@ class L {
       'Scan music from phone', 'Musik vom Telefon scannen');
   String get scanFromPhoneSub => _t('Znajdź albumy w pamięci urządzenia',
       'Find albums in device storage', 'Alben im Gerätespeicher finden');
+  String get findByName =>
+      _t('Znajdź po nazwie', 'Find by name', 'Nach Name suchen');
+  String get findByNameSub => _t('Wyszukaj konkretny album bez wgrywania wszystkich',
+      'Search a specific album without importing all',
+      'Bestimmtes Album suchen, ohne alle zu importieren');
+  String get searchAlbumsHint => _t('Szukaj albumu lub artysty...',
+      'Search album or artist...', 'Album oder Künstler suchen...');
+  String get typeToSearch => _t('Wpisz nazwę, aby wyszukać album',
+      'Type a name to search for an album', 'Namen eingeben, um ein Album zu suchen');
+  String searchNoResults(String q) => _t(
+      'Brak wyników dla „$q”', 'No results for “$q”', 'Keine Ergebnisse für „$q”');
   String get scanBarcode =>
       _t('Skanuj kod kreskowy', 'Scan barcode', 'Barcode scannen');
   String get scanBarcodeSub => _t('Zeskanuj kod z płyty CD lub winyla',

@@ -1,48 +1,178 @@
-﻿import 'dart:convert';
+﻿import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class CoverService {
   static const _timeout = Duration(seconds: 10);
 
-  static Future<String?> fetchCover(String artist, String album) async {
-    if (artist.isEmpty) return null;
-    
+  /// Deezer limituje ~50 zapytan / 5 s. Przy masowym pobieraniu (setki
+  /// albumow) bez odstepu API zaczyna zwracac bledy i NIC sie nie pobiera.
+  static const _minGap = Duration(milliseconds: 250);
+  static DateTime _lastRequest = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// Nazwy folderow typu "Mix - Brodka - Granda" daja artyste = "Mix".
+  /// To nie jest artysta, tylko marker skladanki — w takim wypadku
+  /// prawdziwy artysta siedzi w tytule.
+  static const _compilationMarkers = {
+    'mix', 'mixy', 'skladanka', 'składanka', 'skladanki', 'składanki',
+    'various', 'various artists', 'va', 'rozni', 'różni',
+    'rozni wykonawcy', 'różni wykonawcy', 'compilation', 'compilations',
+    'hits', 'hity', 'best of', 'the best', 'przeboje', 'nieznany',
+    'nieznany artysta', 'unknown', 'unknown artist',
+  };
+
+  static Future<void> _throttle() async {
+    final since = DateTime.now().difference(_lastRequest);
+    if (since < _minGap) {
+      await Future<void>.delayed(_minGap - since);
+    }
+    _lastRequest = DateTime.now();
+  }
+
+  static Future<http.Response?> _get(String url) async {
+    await _throttle();
     try {
-      // 1. Znajdz artyste
-      final artistId = await _findArtistId(artist);
-      
-      if (artistId != null) {
-        // 2. Pobierz albumy artysty
-        final albums = await _getArtistAlbums(artistId);
-        
-        // 3. Znajdz pasujacy album
-        final cover = _findMatchingCover(albums, album);
-        if (cover != null) return cover;
-        
-        // 4. Fallback - pierwszy album artysty
-        if (albums.isNotEmpty) {
-          final firstAlbum = albums[0];
-          final cover = firstAlbum['cover_xl'] ?? firstAlbum['cover_big'] ?? firstAlbum['cover_medium'];
-          if (cover != null) return cover.toString();
-        }
+      final res = await http.get(Uri.parse(url)).timeout(_timeout);
+      if (res.statusCode == 429) {
+        // Rate limit — odczekaj i sprobuj raz jeszcze.
+        await Future<void>.delayed(const Duration(seconds: 2));
+        await _throttle();
+        return await http.get(Uri.parse(url)).timeout(_timeout);
       }
-      
-      // 5. iTunes jako backup
-      return await _fetchFromItunes(artist, album);
+      return res;
     } catch (e) {
-      print('fetchCover error: $e');
+      debugPrint('CoverService request error: $e');
       return null;
     }
   }
 
-  static Future<List<CoverSuggestion>> fetchSuggestions(String artist, String album) async {
-    final suggestions = <CoverSuggestion>[];
-    
-    if (artist.isEmpty) return suggestions;
-    
+  /// Normalizuje pare (artysta, album). Gdy artysta to marker skladanki,
+  /// a tytul ma format "Artysta - Album", rozbija tytul na wlasciwe czesci.
+  static ({String artist, String album}) normalize(String artist, String album) {
+    var a = artist.trim();
+    var b = album.trim();
+
+    if (_compilationMarkers.contains(a.toLowerCase()) && b.contains(' - ')) {
+      final parts = b.split(' - ');
+      a = parts[0].trim();
+      b = parts.sublist(1).join(' - ').trim();
+    }
+    return (artist: a, album: b);
+  }
+
+  static Future<String?> fetchCover(String artist, String album) async {
+    final n = normalize(artist, album);
+    final a = n.artist;
+    final b = n.album;
+    if (a.isEmpty && b.isEmpty) return null;
+
     try {
+      // 1. Bezposrednie szukanie albumu (najskuteczniejsze dla dowolnych nazw).
+      final direct = await _searchAlbum(a, b);
+      if (direct != null) return direct;
+
+      // 2. Przez artyste — dopasuj album z jego dyskografii.
+      if (a.isNotEmpty) {
+        final artistId = await _findArtistId(a);
+        if (artistId != null) {
+          final albums = await _getArtistAlbums(artistId);
+          final cover = _findMatchingCover(albums, b);
+          if (cover != null) return cover;
+        }
+      }
+
+      // 3. iTunes jako backup.
+      return await _fetchFromItunes(a, b);
+    } catch (e) {
+      debugPrint('fetchCover error: $e');
+      return null;
+    }
+  }
+
+  /// Deezer /search/album — szuka po nazwie albumu (i artyscie jesli znany).
+  static Future<String?> _searchAlbum(String artist, String album) async {
+    final queries = <String>[
+      if (artist.isNotEmpty && album.isNotEmpty) '$artist $album',
+      if (album.isNotEmpty) album,
+    ];
+
+    for (final q in queries) {
+      final clean = _cleanAlbumName(q);
+      if (clean.isEmpty) continue;
+      final res =
+          await _get('https://api.deezer.com/search/album?q=${Uri.encodeComponent(clean)}&limit=5');
+      if (res == null || res.statusCode != 200) continue;
+
+      try {
+        final data = json.decode(res.body);
+        final results = data['data'];
+        if (results is List && results.isNotEmpty) {
+          final first = results[0];
+          final cover =
+              first['cover_xl'] ?? first['cover_big'] ?? first['cover_medium'];
+          if (cover != null) return cover.toString();
+        }
+      } catch (_) {
+        // niepoprawny JSON — probuj dalej
+      }
+    }
+    return null;
+  }
+
+  /// Propozycje z Deezer /search/album — kluczowe dla skladanek, gdzie
+  /// dyskografia artysty nie zawiera szukanego wydawnictwa.
+  static Future<void> _addAlbumSearchSuggestions(
+      List<CoverSuggestion> suggestions, String artist, String album) async {
+    final q = _cleanAlbumName(
+        [if (artist.isNotEmpty) artist, if (album.isNotEmpty) album].join(' '));
+    if (q.isEmpty) return;
+
+    final res = await _get(
+        'https://api.deezer.com/search/album?q=${Uri.encodeComponent(q)}&limit=6');
+    if (res == null || res.statusCode != 200) return;
+
+    try {
+      final data = json.decode(res.body);
+      final results = data['data'];
+      if (results is! List) return;
+
+      final existing = suggestions.map((s) => s.url).toSet();
+      for (final item in results) {
+        if (suggestions.length >= 6) break;
+        final cover =
+            item['cover_xl'] ?? item['cover_big'] ?? item['cover_medium'];
+        if (cover == null) continue;
+        final url = cover.toString();
+        if (existing.contains(url)) continue;
+        existing.add(url);
+        suggestions.add(CoverSuggestion(
+          url: url,
+          artist: item['artist']?['name']?.toString() ?? artist,
+          album: item['title']?.toString() ?? album,
+          source: 'Deezer',
+        ));
+      }
+    } catch (_) {
+      // niepoprawny JSON — pomin
+    }
+  }
+
+  static Future<List<CoverSuggestion>> fetchSuggestions(
+      String rawArtist, String rawAlbum) async {
+    final suggestions = <CoverSuggestion>[];
+
+    final n = normalize(rawArtist, rawAlbum);
+    final artist = n.artist;
+    final album = n.album;
+    if (artist.isEmpty && album.isEmpty) return suggestions;
+
+    try {
+      // Propozycje z bezposredniego szukania albumu (dziala tez dla skladanek).
+      await _addAlbumSearchSuggestions(suggestions, artist, album);
+
       // Znajdz artyste
-      final artistId = await _findArtistId(artist);
+      final artistId = artist.isEmpty ? null : await _findArtistId(artist);
       
       if (artistId != null) {
         // Pobierz albumy artysty
@@ -71,7 +201,7 @@ class CoverService {
       await _addItunesSuggestions(suggestions, artist, album);
       
     } catch (e) {
-      print('fetchSuggestions error: $e');
+      debugPrint('fetchSuggestions error: $e');
     }
     
     return suggestions;
@@ -80,11 +210,10 @@ class CoverService {
   static Future<int?> _findArtistId(String artist) async {
     try {
       final query = Uri.encodeComponent(artist);
-      final response = await http.get(
-        Uri.parse('https://api.deezer.com/search/artist?q=$query&limit=5'),
-      ).timeout(_timeout);
-      
-      if (response.statusCode == 200) {
+      final response =
+          await _get('https://api.deezer.com/search/artist?q=$query&limit=5');
+
+      if (response != null && response.statusCode == 200) {
         final data = json.decode(response.body);
         final results = data['data'];
         
@@ -103,7 +232,7 @@ class CoverService {
         }
       }
     } catch (e) {
-      print('_findArtistId error: $e');
+      debugPrint('_findArtistId error: $e');
     }
     return null;
   }
@@ -112,11 +241,10 @@ class CoverService {
     final albums = <Map<String, dynamic>>[];
     
     try {
-      final response = await http.get(
-        Uri.parse('https://api.deezer.com/artist/$artistId/albums?limit=50'),
-      ).timeout(_timeout);
-      
-      if (response.statusCode == 200) {
+      final response =
+          await _get('https://api.deezer.com/artist/$artistId/albums?limit=50');
+
+      if (response != null && response.statusCode == 200) {
         final data = json.decode(response.body);
         final results = data['data'];
         
@@ -129,7 +257,7 @@ class CoverService {
         }
       }
     } catch (e) {
-      print('_getArtistAlbums error: $e');
+      debugPrint('_getArtistAlbums error: $e');
     }
     
     return albums;
@@ -188,15 +316,14 @@ class CoverService {
 
   static Future<String?> _fetchFromItunes(String artist, String album) async {
     try {
-      final query = Uri.encodeComponent('$artist $album');
-      final response = await http.get(
-        Uri.parse('https://itunes.apple.com/search?term=$query&media=music&entity=album&limit=5'),
-      ).timeout(_timeout);
-      
-      if (response.statusCode == 200) {
+      final query = Uri.encodeComponent('$artist $album'.trim());
+      final response = await _get(
+          'https://itunes.apple.com/search?term=$query&media=music&entity=album&limit=5');
+
+      if (response != null && response.statusCode == 200) {
         final data = json.decode(response.body);
         final results = data['results'];
-        
+
         if (results != null && results is List && results.isNotEmpty) {
           for (var item in results) {
             final resultArtist = item['artistName']?.toString().toLowerCase() ?? '';
@@ -210,22 +337,21 @@ class CoverService {
         }
       }
     } catch (e) {
-      print('_fetchFromItunes error: $e');
+      debugPrint('_fetchFromItunes error: $e');
     }
     return null;
   }
 
   static Future<void> _addItunesSuggestions(List<CoverSuggestion> suggestions, String artist, String album) async {
     try {
-      final query = Uri.encodeComponent('$artist $album');
-      final response = await http.get(
-        Uri.parse('https://itunes.apple.com/search?term=$query&media=music&entity=album&limit=5'),
-      ).timeout(_timeout);
-      
-      if (response.statusCode == 200) {
+      final query = Uri.encodeComponent('$artist $album'.trim());
+      final response = await _get(
+          'https://itunes.apple.com/search?term=$query&media=music&entity=album&limit=5');
+
+      if (response != null && response.statusCode == 200) {
         final data = json.decode(response.body);
         final results = data['results'];
-        
+
         if (results != null && results is List) {
           final existingUrls = suggestions.map((s) => s.url).toSet();
           
@@ -257,7 +383,7 @@ class CoverService {
         }
       }
     } catch (e) {
-      print('_addItunesSuggestions error: $e');
+      debugPrint('_addItunesSuggestions error: $e');
     }
   }
 }

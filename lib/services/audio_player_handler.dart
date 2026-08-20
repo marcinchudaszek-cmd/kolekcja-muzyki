@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
@@ -25,6 +26,7 @@ class AudioPlayerHandler extends BaseAudioHandler {
   }
 
   final AndroidEqualizer _equalizer = AndroidEqualizer();
+  final Random _random = Random();
   late final AudioPlayer _player;
 
   /// Wywolywane przy kazdej zmianie stanu — fasada podpina tu notifyListeners.
@@ -281,8 +283,34 @@ class AudioPlayerHandler extends BaseAudioHandler {
     }
   }
 
+  /// Indeksy utworow z plikiem — baza dla losowania.
+  List<int> get _playableIndexes {
+    final album = _currentAlbum;
+    if (album == null) return const [];
+    return [
+      for (int i = 0; i < album.tracks.length; i++)
+        if (album.tracks[i].hasFile) i,
+    ];
+  }
+
   Future<void> nextTrack() async {
     if (_currentAlbum == null) return;
+
+    // Tryb losowy — wczesniej przycisk shuffle tylko sie podswietlal,
+    // a odtwarzanie i tak szlo po kolei.
+    if (_shuffle) {
+      final playable = _playableIndexes;
+      if (playable.isEmpty) return;
+      if (playable.length == 1) {
+        await playTrack(_currentAlbum!, playable.first);
+        return;
+      }
+      final candidates =
+          playable.where((i) => i != _currentTrackIndex).toList();
+      final pick = candidates[_random.nextInt(candidates.length)];
+      await playTrack(_currentAlbum!, pick);
+      return;
+    }
 
     int nextIndex = _currentTrackIndex + 1;
     while (nextIndex < _currentAlbum!.tracks.length) {
