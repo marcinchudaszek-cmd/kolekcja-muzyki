@@ -369,6 +369,10 @@ class AudioPlayerHandler extends BaseAudioHandler {
         MediaAction.seek,
         MediaAction.seekForward,
         MediaAction.seekBackward,
+        // Bez ogloszenia tych akcji Android Auto nie udostepnia wyszukiwania
+        // (ani wyszukiwania glosowego "zagraj ...").
+        MediaAction.playFromSearch,
+        MediaAction.playFromMediaId,
       },
       androidCompactActionIndices: const [0, 1, 2],
       processingState: processingState,
@@ -731,6 +735,109 @@ class AudioPlayerHandler extends BaseAudioHandler {
     if (album == null || parsed.index >= album.tracks.length) return null;
     return _trackToMediaItem(album, parsed.index);
   }
+
+  // ----- Wyszukiwanie (Android Auto: pole szukania i komendy glosowe) -----
+
+  /// Polskie/niemieckie znaki diakrytyczne -> podstawowe, zeby "zaba"
+  /// znajdowalo "Żaba", a "rozni" — "Różni".
+  static const _diacritics = <String, String>{
+    'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o',
+    'ś': 's', 'ź': 'z', 'ż': 'z',
+    'ä': 'a', 'ö': 'o', 'ü': 'u', 'ß': 'ss',
+    'á': 'a', 'é': 'e', 'í': 'i', 'ú': 'u', 'à': 'a', 'è': 'e',
+    'ì': 'i', 'ò': 'o', 'ù': 'u', 'â': 'a', 'ê': 'e', 'î': 'i',
+    'ô': 'o', 'û': 'u', 'ç': 'c', 'ñ': 'n',
+  };
+
+  static String _fold(String s) {
+    final buf = StringBuffer();
+    for (final ch in s.toLowerCase().split('')) {
+      buf.write(_diacritics[ch] ?? ch);
+    }
+    return buf.toString();
+  }
+
+  /// Albumy nadajace sie do odtwarzania (bez listy zyczen, z plikami).
+  List<Album> _browsableAlbums() {
+    if (!Hive.isBoxOpen('albums')) return [];
+    return Hive.box<Album>('albums')
+        .values
+        .where((a) => !a.isWishlist && a.tracks.any((t) => t.hasFile))
+        .toList();
+  }
+
+  @override
+  Future<List<MediaItem>> search(
+    String query, [
+    Map<String, dynamic>? extras,
+  ]) async {
+    final q = _fold(query.trim());
+    // Puste zapytanie (np. "wlacz muzyke") — pokaz cala kolekcje.
+    if (q.isEmpty) return getChildren(AudioService.browsableRootId);
+
+    final albums = _browsableAlbums();
+    final albumHits = <Album>[];
+    final trackHits = <MediaItem>[];
+
+    for (final a in albums) {
+      final artistMatch = _fold(a.artist).contains(q);
+      if (artistMatch || _fold(a.title).contains(q)) {
+        albumHits.add(a);
+      }
+
+      if (trackHits.length < 80) {
+        for (int i = 0; i < a.tracks.length; i++) {
+          final t = a.tracks[i];
+          if (!t.hasFile) continue;
+          if (_fold(t.title).contains(q)) {
+            trackHits.add(_trackToMediaItem(a, i));
+            if (trackHits.length >= 80) break;
+          }
+        }
+      }
+    }
+
+    albumHits.sort((a, b) {
+      final byArtist = a.artist.toLowerCase().compareTo(b.artist.toLowerCase());
+      return byArtist != 0
+          ? byArtist
+          : a.title.toLowerCase().compareTo(b.title.toLowerCase());
+    });
+
+    return [
+      // Najpierw albumy/wykonawcy (do wejscia), potem konkretne utwory.
+      for (final a in albumHits.take(40))
+        MediaItem(
+          id: 'album/${a.id}',
+          title: a.title,
+          artist: a.artist,
+          artUri: _albumArtUri(a),
+          playable: false,
+        ),
+      ...trackHits,
+    ];
+  }
+
+  @override
+  Future<void> playFromSearch(
+    String query, [
+    Map<String, dynamic>? extras,
+  ]) async {
+    final results = await search(query, extras);
+    if (results.isEmpty) return;
+
+    // Preferuj konkretny utwor (zagra od razu); inaczej pierwszy album.
+    final track = results.where((m) => m.playable == true);
+    final chosen = track.isNotEmpty ? track.first : results.first;
+    await playFromMediaId(chosen.id, extras);
+  }
+
+  @override
+  Future<void> prepareFromSearch(
+    String query, [
+    Map<String, dynamic>? extras,
+  ]) =>
+      playFromSearch(query, extras);
 
   // ----- Overrides sesji medialnej (przyciski w aucie / na ekranie blokady) -----
 
