@@ -6,6 +6,7 @@ import '../models/album.dart';
 import '../services/database_service.dart';
 import '../services/audio_service.dart';
 import '../services/history_service.dart';
+import '../services/voice_service.dart';
 import '../widgets/album_card.dart';
 import '../widgets/mini_player.dart';
 import 'album_detail_screen.dart';
@@ -23,8 +24,9 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final TextEditingController _searchController = TextEditingController();
+  bool _voiceAvailable = false;
   // Trwale kontrolery przewijania: keepScrollOffset przywraca pozycje listy
   // nawet gdy scrollable zostanie przebudowany (PageStorageKey nie wystarczal).
   final ScrollController _gridScrollController = ScrollController();
@@ -32,6 +34,50 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isSearching = false;
   bool _isGridView = true; // true = kafelki, false = lista
 @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    VoiceService.isAvailable().then((v) {
+      if (mounted) setState(() => _voiceAvailable = v);
+    });
+    // Komenda Asystenta moze czekac juz przy starcie (zimny start).
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _handlePendingVoiceCommand());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Asystent uruchamia aplikacje ponownie — fraza czeka w MainActivity.
+    if (state == AppLifecycleState.resumed) _handlePendingVoiceCommand();
+  }
+
+  /// Odtwarza to, o co poprosil Asystent ("zagraj X w Kolekcja Muzyki").
+  Future<void> _handlePendingVoiceCommand() async {
+    final query = await VoiceService.consumePendingSearch();
+    if (query == null || !mounted) return;
+    final audio = Provider.of<AudioService>(context, listen: false);
+    await audio.handler.playFromSearch(query);
+    if (!mounted) return;
+    if (audio.currentTrack == null && query.trim().isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L.read(context).nothingFoundFor(query))),
+      );
+    }
+  }
+
+  /// Dyktowanie do pola wyszukiwania (systemowe, bez uprawnienia do mikrofonu).
+  Future<void> _startVoiceSearch(DatabaseService db) async {
+    final l = L.read(context);
+    final text = await VoiceService.listen(localeCode: l.lang.code);
+    if (text == null || text.isEmpty || !mounted) return;
+    setState(() {
+      _isSearching = true;
+      _searchController.text = text;
+    });
+    db.setSearchQuery(text);
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final audio = Provider.of<AudioService>(context, listen: false);
@@ -42,6 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     _gridScrollController.dispose();
     _listScrollController.dispose();
@@ -105,15 +152,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: InputDecoration(
                       hintText: L.of(context).searchAlbums,
                       prefixIcon: const Icon(Icons.search),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          setState(() {
-                            _isSearching = false;
-                            _searchController.clear();
-                            db.setSearchQuery('');
-                          });
-                        },
+                      suffixIcon: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_voiceAvailable)
+                            IconButton(
+                              icon: const Icon(Icons.mic),
+                              tooltip: L.of(context).voiceSearch,
+                              onPressed: () => _startVoiceSearch(db),
+                            ),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              setState(() {
+                                _isSearching = false;
+                                _searchController.clear();
+                                db.setSearchQuery('');
+                              });
+                            },
+                          ),
+                        ],
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),

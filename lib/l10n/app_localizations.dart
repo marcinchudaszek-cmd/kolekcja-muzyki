@@ -151,6 +151,10 @@ class L {
   String get myCollection => _t('🎵 Moja Kolekcja', '🎵 My Collection', '🎵 Meine Sammlung');
   String get searchAlbums =>
       _t('Szukaj albumów...', 'Search albums...', 'Alben suchen...');
+  String get voiceSearch =>
+      _t('Wyszukiwanie głosowe', 'Voice search', 'Sprachsuche');
+  String nothingFoundFor(String query) => _t('Nie znaleziono: „$query"',
+      'Nothing found for "$query"', 'Nichts gefunden für „$query"');
   String get viewList => _t('Widok listy', 'List view', 'Listenansicht');
   String get viewGrid => _t('Widok kafelków', 'Grid view', 'Kachelansicht');
   String get statistics => _t('Statystyki', 'Statistics', 'Statistiken');

@@ -42,6 +42,14 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+            <!-- Asystent Google: "zagraj ... w Kolekcja Muzyki".
+                 Fraza jest odbierana w MainActivity i przekazywana do
+                 wyszukiwania w sesji medialnej. -->
+            <intent-filter>
+                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
         
         <!-- Serwis audio w tle -->
@@ -76,6 +84,14 @@
     <queries>
         <package android:name="com.shazam.android" />
         <package android:name="com.melodis.midomiMusicIdentifier.freemium" />
+        <!-- Widocznosc aplikacji dyktowania (Android 11+), zeby mozna bylo
+             uruchomic systemowe rozpoznawanie mowy. -->
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
