@@ -51,6 +51,10 @@ class AudioPlayerHandler extends BaseAudioHandler {
   void Function(String albumId, String trackTitle, int durationSeconds)?
       onTrackPlayed;
 
+  /// Etykieta pozycji "losowy album" w Android Auto. Ustawiana z UI, bo
+  /// handler nie ma dostepu do tlumaczen (dziala poza drzewem widgetow).
+  String randomAlbumLabel = 'Losowo';
+
   /// Zamienia surowa sciezke pliku na content:// URI z MediaStore.
   /// Ustawiany przez fasade (uzywa on_audio_query). Konieczny, bo na
   /// Androidzie 13+ ExoPlayer nie moze otworzyc plikow w pamieci
@@ -703,6 +707,13 @@ class AudioPlayerHandler extends BaseAudioHandler {
               : a.title.toLowerCase().compareTo(b.title.toLowerCase());
         });
       return [
+        // Na gorze — jedno dotkniecie w aucie wlacza losowy album.
+        if (albums.isNotEmpty)
+          MediaItem(
+            id: 'random',
+            title: randomAlbumLabel,
+            playable: true,
+          ),
         for (final a in albums)
           MediaItem(
             id: 'album/${a.id}',
@@ -764,6 +775,13 @@ class AudioPlayerHandler extends BaseAudioHandler {
         .values
         .where((a) => !a.isWishlist && a.tracks.any((t) => t.hasFile))
         .toList();
+  }
+
+  /// Wlacza losowy album z kolekcji (uzywane przez Android Auto i UI).
+  Future<void> playRandomAlbum() async {
+    final albums = _browsableAlbums();
+    if (albums.isEmpty) return;
+    await playAlbum(albums[_random.nextInt(albums.length)]);
   }
 
   @override
@@ -867,6 +885,10 @@ class AudioPlayerHandler extends BaseAudioHandler {
     String mediaId, [
     Map<String, dynamic>? extras,
   ]) async {
+    if (mediaId == 'random') {
+      await playRandomAlbum();
+      return;
+    }
     final parsed = _parseTrackId(mediaId);
     if (parsed != null) {
       final album = _findAlbum(parsed.albumId);

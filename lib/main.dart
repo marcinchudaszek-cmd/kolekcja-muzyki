@@ -88,7 +88,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BackupService()),
       ],
       child: Consumer<LocaleProvider>(
-        builder: (context, localeProvider, _) => MaterialApp(
+        builder: (context, localeProvider, _) {
+        // Etykieta pozycji "losowo" w Android Auto musi znac aktualny jezyk.
+        audioHandler.randomAlbumLabel = localeProvider.l.randomTitle;
+        return MaterialApp(
         title: 'Kolekcja Muzyki',
         debugShowCheckedModeBanner: false,
         locale: localeProvider.locale,
@@ -151,7 +154,8 @@ class MyApp extends StatelessWidget {
           ),
         ),
         home: const HomeScreen(),
-      ),
+      );
+        },
       ),
     );
   }

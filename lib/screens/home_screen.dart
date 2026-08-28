@@ -16,6 +16,7 @@ import 'scanner_screen.dart';
 import 'stats_screen.dart';
 import 'settings_screen.dart';
 import 'scan_folder_screen.dart';
+import 'player_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -201,6 +202,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: () => setState(() => _isSearching = true),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.casino),
+                  tooltip: L.of(context).randomTitle,
+                  onPressed: () => _showRandomOptions(context, db),
                 ),
                 IconButton(
                   icon: Icon(
@@ -535,6 +541,111 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         );
       },
     );
+  }
+
+  // ----- Losowanie (odkrywanie kolekcji) -----
+
+  void _showRandomOptions(BuildContext context, DatabaseService db) {
+    final l = L.read(context);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l.randomTitle, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 24),
+            _buildAddOption(
+              icon: Icons.album,
+              title: l.randomAlbum,
+              subtitle: l.randomAlbumSub,
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _openRandomAlbum(db);
+              },
+            ),
+            _buildAddOption(
+              icon: Icons.person_search,
+              title: l.randomArtist,
+              subtitle: l.randomArtistSub,
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _showRandomArtist(db);
+              },
+            ),
+            _buildAddOption(
+              icon: Icons.play_circle,
+              title: l.playRandomAlbum,
+              subtitle: l.playRandomAlbumSub,
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _playRandomAlbum(db);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _emptyToast() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(L.read(context).emptyCollection)),
+    );
+  }
+
+  void _openRandomAlbum(DatabaseService db) {
+    final album = db.getRandomAlbum();
+    if (album == null) {
+      _emptyToast();
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => AlbumDetailScreen(albumId: album.id)),
+    );
+  }
+
+  /// Losowy wykonawca — wpisuje go w wyszukiwarke, wiec od razu widac
+  /// wszystkie jego albumy.
+  void _showRandomArtist(DatabaseService db) {
+    final artist = db.getRandomArtist();
+    if (artist == null) {
+      _emptyToast();
+      return;
+    }
+    setState(() {
+      _isSearching = true;
+      _searchController.text = artist;
+    });
+    db.setSearchQuery(artist);
+  }
+
+  Future<void> _playRandomAlbum(DatabaseService db) async {
+    final album = db.getRandomAlbum(onlyPlayable: true);
+    if (album == null) {
+      _emptyToast();
+      return;
+    }
+    final audio = Provider.of<AudioService>(context, listen: false);
+    try {
+      await audio.playAlbum(album);
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const PlayerScreen()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(L.read(context).playbackError(e))),
+      );
+    }
   }
 
   void _showAddOptions(BuildContext context) {

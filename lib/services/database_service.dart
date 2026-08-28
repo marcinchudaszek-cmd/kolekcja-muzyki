@@ -1,8 +1,11 @@
-﻿import 'package:flutter/foundation.dart';
+﻿import 'dart:math';
+
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/album.dart';
 
 class DatabaseService extends ChangeNotifier {
+  final Random _random = Random();
   late Box<Album> _albumsBox;
   List<Album> _albums = [];
   
@@ -353,11 +356,27 @@ class DatabaseService extends ChangeNotifier {
     }
   }
 
-  // Losowy album
-  Album? getRandomAlbum() {
-    if (_albums.isEmpty) return null;
-    final index = DateTime.now().millisecondsSinceEpoch % _albums.length;
-    return _albums[index];
+  /// Losowy album z kolekcji (pomija liste zyczen).
+  /// [onlyPlayable] ogranicza do albumow, ktore maja pliki do odtworzenia.
+  Album? getRandomAlbum({bool onlyPlayable = false}) {
+    final pool = _albums
+        .where((a) =>
+            !a.isWishlist &&
+            (!onlyPlayable || a.tracks.any((t) => t.hasFile)))
+        .toList();
+    if (pool.isEmpty) return null;
+    return pool[_random.nextInt(pool.length)];
+  }
+
+  /// Losowy wykonawca obecny w kolekcji.
+  String? getRandomArtist() {
+    final artists = _albums
+        .where((a) => !a.isWishlist && a.artist.trim().isNotEmpty)
+        .map((a) => a.artist.trim())
+        .toSet()
+        .toList();
+    if (artists.isEmpty) return null;
+    return artists[_random.nextInt(artists.length)];
   }
 
   // Settery filtrow

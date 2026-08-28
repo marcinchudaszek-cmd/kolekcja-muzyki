@@ -151,6 +151,22 @@ class L {
   String get myCollection => _t('🎵 Moja Kolekcja', '🎵 My Collection', '🎵 Meine Sammlung');
   String get searchAlbums =>
       _t('Szukaj albumów...', 'Search albums...', 'Alben suchen...');
+  String get randomTitle => _t('Losowo', 'Random', 'Zufall');
+  String get randomAlbum =>
+      _t('Losowy album', 'Random album', 'Zufälliges Album');
+  String get randomAlbumSub => _t('Otwórz przypadkowy album z kolekcji',
+      'Open a random album from your collection',
+      'Ein zufälliges Album aus deiner Sammlung öffnen');
+  String get randomArtist =>
+      _t('Losowy wykonawca', 'Random artist', 'Zufälliger Künstler');
+  String get randomArtistSub => _t('Pokaż wszystkie albumy losowego wykonawcy',
+      'Show all albums by a random artist',
+      'Alle Alben eines zufälligen Künstlers zeigen');
+  String get playRandomAlbum => _t('Zagraj losowy album', 'Play random album',
+      'Zufälliges Album abspielen');
+  String get playRandomAlbumSub =>
+      _t('Od razu włącz odtwarzanie', 'Start playing right away',
+          'Sofort mit der Wiedergabe beginnen');
   String get voiceSearch =>
       _t('Wyszukiwanie głosowe', 'Voice search', 'Sprachsuche');
   String nothingFoundFor(String query) => _t('Nie znaleziono: „$query"',
