@@ -44,6 +44,11 @@ void main() async {
             audio_service.AndroidContentStyle.gridItemHintValue,
         audio_service.AndroidContentStyle.playableHintKey:
             audio_service.AndroidContentStyle.listItemHintValue,
+        // BEZ tego Android Auto nie udostepnia wyszukiwania — zamyka pole
+        // po pierwszej literze, bo uznaje, ze aplikacja go nie obsluguje.
+        // audio_service nie ustawia tego klucza samo; extras roota pochodza
+        // w calosci stad (AudioService.onGetRoot -> getBrowsableRootExtras).
+        'android.media.browse.SEARCH_SUPPORTED': true,
       },
     ),
   );

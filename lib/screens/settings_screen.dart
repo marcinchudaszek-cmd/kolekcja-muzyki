@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:io';
 import '../l10n/app_localizations.dart';
 import '../services/database_service.dart';
@@ -21,6 +22,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isDownloadingCovers = false;
   int _downloadProgress = 0;
   int _downloadTotal = 0;
+
+  /// Wersja czytana z systemu — wczesniej byla wpisana na sztywno i klamala
+  /// (pokazywala 1.4.2 przy realnej 1.9.x), co utrudnialo diagnoze.
+  String _appVersion = '';
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) {
+        setState(() => _appVersion = '${info.version} (${info.buildNumber})');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +148,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.info),
             title: Text(l.about),
-            subtitle: Text('${l.appTitle} v1.4'),
+            subtitle: Text(_appVersion.isEmpty ? l.appTitle : '${l.appTitle} $_appVersion'),
             onTap: () => _showAboutDialog(context),
           ),
         ],
@@ -389,7 +404,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l.version('1.4.2')),
+            Text(l.version(_appVersion)),
             const SizedBox(height: 16),
             Text(l.aboutDescription),
             const SizedBox(height: 8),

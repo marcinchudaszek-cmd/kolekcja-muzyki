@@ -164,13 +164,20 @@ class AudioPlayerHandler extends BaseAudioHandler {
   /// Kopiuje ustawienia equalizera z gracza A na wskazany equalizer, zeby
   /// po crossfade brzmienie sie nie zmienilo.
   Future<void> _syncEqualizerTo(AndroidEqualizer target) async {
+    // Limit czasu jest tu zabezpieczeniem, a nie ostroznoscia: `parameters`
+    // nie konczy sie, dopoki odtwarzacz nie zostanie aktywowany, wiec bez
+    // niego jedno zawieszenie zablokowaloby crossfade do konca sesji.
+    const limit = Duration(seconds: 3);
     try {
       await target.setEnabled(_equalizer.enabled);
-      final src = await _equalizer.parameters;
-      final dst = await target.parameters;
+      final src = await _equalizer.parameters.timeout(limit);
+      final dst = await target.parameters.timeout(limit);
       for (int i = 0; i < src.bands.length && i < dst.bands.length; i++) {
         await dst.bands[i].setGain(src.bands[i].gain);
       }
+    } on TimeoutException {
+      // Brzmienie moze sie chwilowo roznic, ale przejscie ma sie odbyc.
+      debugPrint('Sync equalizera: przekroczony czas — pomijam');
     } catch (e) {
       debugPrint('Sync equalizera nieudany: $e');
     }
@@ -252,9 +259,18 @@ class AudioPlayerHandler extends BaseAudioHandler {
     final to = _standby;
 
     try {
-      await _syncEqualizerTo(_standbyEqualizer);
       await to.setVolume(0);
+      // KOLEJNOSC JEST KRYTYCZNA: efekty dzwiekowe (equalizer) sa w just_audio
+      // aktywowane dopiero, gdy odtwarzacz dostanie zrodlo. Jego `parameters`
+      // to Completer wypelniany wlasnie przy tej aktywacji — synchronizacja
+      // equalizera PRZED setAudioSource czekala w nieskonczonosc na odtwarzacz,
+      // ktory nigdy nie zostal aktywowany, i cicho zabijala crossfade na cala
+      // sesje (flaga _crossfading zostawala podniesiona).
       await to.setAudioSource(await _audioSourceFor(album.tracks[nextIndex]));
+      await _syncEqualizerTo(_standbyEqualizer);
+      // Jeszcze raz na zero — gdyby zaladowanie zrodla przywrocilo glosnosc,
+      // nastepny utwor wystartowalby na pelnej zamiast wchodzic lagodnie.
+      await to.setVolume(0);
       unawaited(to.play());
     } catch (e) {
       debugPrint('Crossfade — nie udalo sie przygotowac nastepnego utworu: $e');
@@ -708,11 +724,17 @@ class AudioPlayerHandler extends BaseAudioHandler {
         });
       return [
         // Na gorze — jedno dotkniecie w aucie wlacza losowy album.
+        // Wymuszamy dla tej pozycji styl listy: reszta roota to siatka
+        // okladek, a ta pozycja nie ma grafiki i jako kafelek renderowalaby
+        // sie jako pusty prostokat bez czytelnego napisu.
         if (albums.isNotEmpty)
           MediaItem(
             id: 'random',
             title: randomAlbumLabel,
             playable: true,
+            extras: const {
+              'android.media.browse.CONTENT_STYLE_SINGLE_ITEM_HINT': 1,
+            },
           ),
         for (final a in albums)
           MediaItem(
