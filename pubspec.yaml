@@ -3,7 +3,7 @@ description: Zarządzaj swoją kolekcją muzyki - pełny odtwarzacz z dostępem 
 
 publish_to: 'none'
 
-version: 1.9.0+36
+version: 1.9.1+37
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -50,7 +50,6 @@ dependencies:
   # Narzędzia
   provider: ^6.1.1
   shared_preferences: ^2.2.2
-  package_info_plus: ^8.0.0
   intl: ^0.20.2
 
 dev_dependencies:
