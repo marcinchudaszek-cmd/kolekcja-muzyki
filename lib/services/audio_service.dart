@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:mediastore_resolver/mediastore_resolver.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/album.dart';
@@ -19,8 +19,6 @@ class AudioService extends ChangeNotifier {
     _handler.resolveUri = _resolvePathToUri;
   }
 
-  static const MethodChannel _mediaStore = MethodChannel('kolekcja/mediastore');
-
   /// Cache mapy: surowa sciezka pliku -> content:// URI z MediaStore.
   Map<String, String>? _pathToUri;
 
@@ -35,10 +33,7 @@ class AudioService extends ChangeNotifier {
 
     // 1. Natywny ContentResolver — niezawodny, niezalezny od on_audio_query.
     try {
-      final uri = await _mediaStore.invokeMethod<String>(
-        'uriForPath',
-        {'path': path},
-      );
+      final uri = await MediastoreResolver.uriForPath(path);
       if (uri != null && uri.isNotEmpty) return uri;
     } catch (_) {
       // np. kanal niedostepny w trybie headless — sprobuj fallbacku nizej.

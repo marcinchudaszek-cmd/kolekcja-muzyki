@@ -112,6 +112,43 @@ class L {
           ? 'Keine Cover gefunden ($checked Alben geprüft)'
           : '$found Cover von $checked geprüften Alben geladen');
   String get coversTitle => _t('Okładki', 'Covers', 'Cover');
+  String get checkCovers =>
+      _t('Sprawdź okładki', 'Check covers', 'Cover prüfen');
+  String get checkCoversSubtitle => _t(
+      'Znajdź błędne okładki i podmień je na pasujące',
+      'Find wrong covers and replace them with matching ones',
+      'Falsche Cover finden und durch passende ersetzen');
+  String get coverReviewTitle =>
+      _t('Przegląd okładek', 'Cover review', 'Cover-Prüfung');
+  String checkingCovers(int done, int total) => _t(
+      'Sprawdzam okładki… $done / $total',
+      'Checking covers… $done / $total',
+      'Prüfe Cover… $done / $total');
+  String coversToReplace(int n) =>
+      _t('Do poprawienia ($n)', 'To fix ($n)', 'Zu korrigieren ($n)');
+  String coversToAdd(int n) =>
+      _t('Nowe okładki ($n)', 'New covers ($n)', 'Neue Cover ($n)');
+  String coversUnconfirmed(int n) => _t('Niepotwierdzone ($n)',
+      'Unconfirmed ($n)', 'Nicht bestätigt ($n)');
+  String get coversUnconfirmedHint => _t(
+      'Nie udało się potwierdzić tych okładek ani znaleźć pewnych. Dotknij albumu, żeby wybrać okładkę ręcznie.',
+      'These covers could not be confirmed and no reliable match was found. Tap an album to pick a cover manually.',
+      'Diese Cover konnten nicht bestätigt werden. Tippe auf ein Album, um manuell eines zu wählen.');
+  String coversSummary(int ok, int manual, int notFound) => _t(
+      'Poprawne: $ok · wybrane ręcznie (pominięte): $manual · bez okładki i bez trafienia: $notFound',
+      'Correct: $ok · picked manually (skipped): $manual · no cover, no match: $notFound',
+      'Korrekt: $ok · manuell gewählt (übersprungen): $manual · ohne Cover, kein Treffer: $notFound');
+  String applySelectedCovers(int n) => _t('Zastosuj zaznaczone ($n)',
+      'Apply selected ($n)', 'Ausgewählte übernehmen ($n)');
+  String coversApplied(int n) => _t('Zmieniono okładki: $n',
+      'Covers changed: $n', 'Cover geändert: $n');
+  String get noCoverIssues => _t('Wszystkie sprawdzone okładki są w porządku',
+      'All checked covers look fine', 'Alle geprüften Cover sind in Ordnung');
+  String get stopChecking => _t('Zatrzymaj', 'Stop', 'Stopp');
+  String coverFoundAs(String source, String artist, String album) => _t(
+      '$source: $artist – $album',
+      '$source: $artist – $album',
+      '$source: $artist – $album');
   String get allHaveCovers => _t('Wszystkie albumy mają już okładki!',
       'All albums already have covers!', 'Alle Alben haben bereits Cover!');
   String get audioSettings => _t('Ustawienia dźwięku', 'Audio settings', 'Audio-Einstellungen');
@@ -164,6 +201,10 @@ class L {
       'Alle Alben eines zufälligen Künstlers zeigen');
   String get playRandomAlbum => _t('Zagraj losowy album', 'Play random album',
       'Zufälliges Album abspielen');
+  String get playRandomArtist => _t('Zagraj losowego wykonawcę',
+      'Play random artist', 'Zufälligen Künstler abspielen');
+  String get autoAlbums => _t('Albumy', 'Albums', 'Alben');
+  String get autoArtists => _t('Wykonawcy', 'Artists', 'Künstler');
   String get playRandomAlbumSub =>
       _t('Od razu włącz odtwarzanie', 'Start playing right away',
           'Sofort mit der Wiedergabe beginnen');

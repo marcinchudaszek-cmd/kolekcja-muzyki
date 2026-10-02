@@ -56,6 +56,9 @@ void main() async {
   // Wczytaj zapisany jezyk aplikacji.
   final localeProvider = LocaleProvider();
   await localeProvider.load();
+  // Juz tutaj, nie dopiero w build(): przy starcie z Android Auto UI nie
+  // powstaje, a drzewo w aucie i tak powinno byc w jezyku uzytkownika.
+  applyAutoLabels(audioHandler, localeProvider.l);
 
   // Ustaw orientacje na portrait
   SystemChrome.setPreferredOrientations([
@@ -70,6 +73,15 @@ void main() async {
   ));
 
   runApp(MyApp(audioHandler: audioHandler, localeProvider: localeProvider));
+}
+
+void applyAutoLabels(AudioPlayerHandler handler, L l) {
+  handler
+    ..randomAlbumLabel = l.randomTitle
+    ..autoAlbumsLabel = l.autoAlbums
+    ..autoArtistsLabel = l.autoArtists
+    ..autoPlayRandomAlbumLabel = l.playRandomAlbum
+    ..autoPlayRandomArtistLabel = l.playRandomArtist;
 }
 
 class MyApp extends StatelessWidget {
@@ -94,8 +106,8 @@ class MyApp extends StatelessWidget {
       ],
       child: Consumer<LocaleProvider>(
         builder: (context, localeProvider, _) {
-        // Etykieta pozycji "losowo" w Android Auto musi znac aktualny jezyk.
-        audioHandler.randomAlbumLabel = localeProvider.l.randomTitle;
+        // Etykiety drzewa Android Auto musza znac aktualny jezyk.
+        applyAutoLabels(audioHandler, localeProvider.l);
         return MaterialApp(
         title: 'Kolekcja Muzyki',
         debugShowCheckedModeBanner: false,

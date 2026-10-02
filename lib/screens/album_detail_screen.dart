@@ -565,6 +565,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                 title: Text(l.removeCover, style: const TextStyle(color: Colors.red)),
                 onTap: () {
                   db.updateCover(album.id, '');
+                  CoverService.markManual(album.id, false);
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(l.coverRemoved)),
@@ -603,13 +604,15 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     );
 
     try {
-      final coverUrl = await CoverService.fetchCover(album.artist, album.title);
+      final coverUrl = await CoverService.fetchCover(album.artist, album.title,
+          trackCount: album.tracks.isEmpty ? null : album.tracks.length);
       
       if (!mounted) return;
       navigator.pop();
       
       if (coverUrl != null && coverUrl.isNotEmpty) {
         db.updateCover(album.id, coverUrl);
+        CoverService.markManual(album.id, false);
         scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text(l.coverUpdated),
@@ -661,7 +664,9 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     );
 
     try {
-      final suggestions = await CoverService.fetchSuggestions(album.artist, album.title);
+      final suggestions = await CoverService.fetchSuggestions(
+          album.artist, album.title,
+          trackCount: album.tracks.isEmpty ? null : album.tracks.length);
       
       if (!mounted) return;
       navigator.pop();
@@ -721,6 +726,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     return GestureDetector(
                       onTap: () {
                         db.updateCover(album.id, suggestion.url);
+                        // Wybor uzytkownika — przeglad okladek go nie ruszy.
+                        CoverService.markManual(album.id, true);
                         Navigator.pop(sheetContext);
                         scaffoldMessenger.showSnackBar(
                           SnackBar(
@@ -823,6 +830,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
               final url = controller.text.trim();
               if (url.isNotEmpty && url.startsWith('http')) {
                 db.updateCover(album.id, url);
+                CoverService.markManual(album.id, true);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

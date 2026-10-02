@@ -3,7 +3,7 @@ description: Zarządzaj swoją kolekcją muzyki - pełny odtwarzacz z dostępem 
 
 publish_to: 'none'
 
-version: 1.9.1+37
+version: 1.10.0+38
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -24,6 +24,9 @@ dependencies:
   just_audio: ^0.9.36
   audio_service: ^0.18.15
   on_audio_query: ^2.9.0
+  # MediaStore: sciezka -> content:// (dziala tez przy starcie z Android Auto)
+  mediastore_resolver:
+    path: packages/mediastore_resolver
   
   # Google Drive backup
   google_sign_in: ^6.2.1

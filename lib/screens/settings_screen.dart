@@ -8,6 +8,7 @@ import '../l10n/app_localizations.dart';
 import '../services/database_service.dart';
 import '../services/cover_service.dart';
 import 'audio_settings_screen.dart';
+import 'cover_review_screen.dart';
 import 'history_screen.dart';
 import 'recognize_screen.dart';
 
@@ -67,6 +68,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 : l.downloadCovers),
             subtitle: Text(l.downloadCoversSubtitle),
             onTap: _isDownloadingCovers ? null : () => _downloadAllCovers(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.image_search),
+            title: Text(l.checkCovers),
+            subtitle: Text(l.checkCoversSubtitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CoverReviewScreen()),
+            ),
           ),
 
           // Sekcja: Odtwarzacz
@@ -196,7 +207,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     for (var album in albumsWithoutCovers) {
       if (!mounted) return; // ekran zamkniety w trakcie — przerwij
       try {
-        final coverUrl = await CoverService.fetchCover(album.artist, album.title);
+        final coverUrl = await CoverService.fetchCover(
+            album.artist, album.title,
+            trackCount: album.tracks.isEmpty ? null : album.tracks.length);
         if (coverUrl != null && coverUrl.isNotEmpty) {
           // await — bez tego zapis leci "w tle", a ewentualny blad nie jest
           // lapany przez ten try/catch.

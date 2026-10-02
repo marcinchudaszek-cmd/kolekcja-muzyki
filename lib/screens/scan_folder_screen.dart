@@ -320,7 +320,8 @@ class _ScanFolderScreenState extends State<ScanFolderScreen> {
         } else {
           String? coverUrl;
           try {
-            coverUrl = await CoverService.fetchCover(artist, title);
+            coverUrl = await CoverService.fetchCover(artist, title,
+                trackCount: tracks.length);
           } catch (_) {}
 
           final album = Album(
